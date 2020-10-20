@@ -5,16 +5,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ADSBackend.Controllers
+namespace ADSBackend.Controllers.Api.v1
 {
     [Produces("application/json")]
-    [Route("api")]
-    public class ApiController : Controller
+    [Route("api/v1/News")]
+    public class NewsController : Controller
     {
         private readonly Services.Configuration Configuration;
         private readonly Services.Cache _cache;
 
-        public ApiController(Services.Configuration configuration, Services.Cache cache)
+        public NewsController(Services.Configuration configuration, Services.Cache cache)
         {
             Configuration = configuration;
             _cache = cache;
@@ -22,7 +22,7 @@ namespace ADSBackend.Controllers
 
         // GET: api/News
         [HttpGet("News")]
-        public async Task<List<NewsFeedItem>> GetNewsFeed()
+        public async Task<List<NewsFeedItem>> GetFeed()
         {
             var newsUrl = new Uri("https://www.eastonsd.org/apps/news/news_rss.jsp");
 
@@ -35,7 +35,27 @@ namespace ADSBackend.Controllers
             return feedItems.OrderByDescending(x => x.PublishDate).ToList();
         }
 
-        // GET: api/Config
+        
+        [HttpPost("News")]
+        public async Task<NewsFeedItem> CreateNewsFeedItem (NewsFeedItem item)
+        {
+            return item;
+        }
+
+        [HttpPut("News/{id}")]
+        public async Task<NewsFeedItem> UpdateNewsFeedItem(int id, NewsFeedItem item)
+        {
+            return item;
+        }
+
+        [HttpDelete("News/{id}")]
+        public async Task<bool> DeleteNewsFeedItem(int id)
+        {
+            return true;
+        }
+        
+
+        // GET: api/v1/News/Config
         [HttpGet("Config")]
         public ConfigResponse GetConfig()
         {
