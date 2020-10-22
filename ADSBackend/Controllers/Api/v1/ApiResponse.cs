@@ -5,7 +5,7 @@ using System.Net;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace ADSBackend.Controllers.Api
+namespace ADSBackend.Controllers.Api.v1
 {
     [DataContract]
     public class ApiResponse
