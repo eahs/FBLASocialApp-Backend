@@ -46,7 +46,7 @@ namespace ADSBackend.Models
         public string PasswordSalt { get; set; }
 
         public int WallId { get; set; }
-        Wall Wall { get; set; }
-        List<MemberFriend> Friends { get; set; }
+        public Wall Wall { get; set; }
+        public List<MemberFriend> Friends { get; set; }
     }
 }

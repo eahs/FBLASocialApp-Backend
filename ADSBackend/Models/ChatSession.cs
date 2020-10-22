@@ -11,7 +11,7 @@ namespace ADSBackend.Models
 		public Session Session { get; set; }
 		public Member Member1 { get; set; }
 		public Member Member2 { get; set; }
-		List<ChatMessage> Messages { get; set; }
+		public List<ChatMessage> Messages { get; set; }
 		public DateTime LastMessageSentAt { get; set; }
 	}
 }
