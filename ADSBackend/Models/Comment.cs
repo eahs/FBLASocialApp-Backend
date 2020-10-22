@@ -15,10 +15,10 @@ namespace ADSBackend.Models
 		public int ParentCommentId { get; set; }
 		public string Body { get; set; }
 		public string AdditionalData { get; set; } = "{}";
-		DateTime CreatedAt { get; set; }
-		DateTime EditedAt { get; set; }
+		public DateTime CreatedAt { get; set; }
+		public DateTime EditedAt { get; set; }
 
-		List<Reaction> Reactions { get; set; }
+		public List<Reaction> Reactions { get; set; }
 
 	}
 }
