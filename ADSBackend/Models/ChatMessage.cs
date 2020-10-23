@@ -16,6 +16,6 @@ namespace ADSBackend.Models
 		public string Image { get; set; }
 		public DateTime CreatedAt { get; set; }
 		public DateTime EditedAt { get; set; }
-		public bool isDeleted { get; set; } = false;
+		public bool IsDeleted { get; set; } = false;
 	}
 }
