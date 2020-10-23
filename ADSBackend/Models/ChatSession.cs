@@ -10,8 +10,7 @@ namespace ADSBackend.Models
 	{
 		public int SessionId { get; set; }
 		public Session Session { get; set; }
-		public Member Member1 { get; set; }
-		public Member Member2 { get; set; }
+		public List<Member> ChatMembers { get; set; }
 		public List<ChatMessage> Messages { get; set; }
 		[NotMapped]
 		public ChatMessage LastMessage { get; set; }
