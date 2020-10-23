@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -12,6 +13,7 @@ namespace ADSBackend.Models
 		public Member Member1 { get; set; }
 		public Member Member2 { get; set; }
 		public List<ChatMessage> Messages { get; set; }
-		public DateTime LastMessageSentAt { get; set; }
+		[NotMapped]
+		public ChatMessage LastMessage { get; set; }
 	}
 }
