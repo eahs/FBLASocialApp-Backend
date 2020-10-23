@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -21,6 +22,10 @@ namespace ADSBackend.Models
 		public bool IsDeleted { get; set; } = false;
 		public List<PostReaction> Reactions { get; set; }
 		public List<PostComment> Comments { get; set; }
+		public int FavoriteCount { get; set; }
+		public bool IsFeatured { get; set; }
+		[NotMapped]
+		public bool IsFavorite { get; set; }
 
 	}
 }
