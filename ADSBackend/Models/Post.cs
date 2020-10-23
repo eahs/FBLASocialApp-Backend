@@ -15,10 +15,10 @@ namespace ADSBackend.Models
 		public string Title { get; set; }
 		public string Body { get; set; }
 		public string Image { get; set; }
-		public bool isMachinePost { get; set; } = false;
+		public bool IsMachinePost { get; set; } = false;
 		public DateTime CreatedAt { get; set; }
 		public DateTime EditedAt { get; set; }
-		public bool isDeleted { get; set; } = false;
+		public bool IsDeleted { get; set; } = false;
 		public List<PostReaction> Reactions { get; set; }
 		public List<PostComment> Comments { get; set; }
 
