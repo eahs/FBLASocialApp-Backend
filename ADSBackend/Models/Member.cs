@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace ADSBackend.Models
@@ -41,7 +42,9 @@ namespace ADSBackend.Models
         public string Description { get; set; }
 
         [Required]
+        [JsonIgnore]
         public string Password { get; set; }
+        [JsonIgnore]
 
         public string PasswordSalt { get; set; }
 
