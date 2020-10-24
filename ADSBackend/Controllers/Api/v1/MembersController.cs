@@ -1,4 +1,8 @@
 ﻿using ADSBackend.Models.ApiModels;
+using ADSBackend.Models.AuthenticationModels;
+using ADSBackend.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -7,17 +11,28 @@ using System.Threading.Tasks;
 
 namespace ADSBackend.Controllers.Api.v1
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Produces("application/json")]
-    [Route("api/v1/Members")]
+    [Route("api/v1/members")]
     public class MembersController : Controller
     {
-        private readonly Services.Configuration Configuration;
-        private readonly Services.Cache _cache;
+        private IUserService _userService;
 
-        public MembersController(Services.Configuration configuration, Services.Cache cache)
+        public MembersController(IUserService userService)
         {
-            Configuration = configuration;
-            _cache = cache;
+            _userService = userService;
+        }
+
+        [AllowAnonymous]
+        [HttpPost("authenticate")]
+        public IActionResult Authenticate(AuthenticateRequest model)
+        {
+            var member = _userService.Authenticate(model);
+
+            if (member == null)
+                return BadRequest(new { message = "Username or password is incorrect" });
+
+            return Ok(member);
         }
 
         // GET: api/v1/Members/{id}
@@ -26,9 +41,9 @@ namespace ADSBackend.Controllers.Api.v1
         /// </summary>
         /// <param name="id"></param>    
         [HttpGet("{id}")]
-        public async Task<bool> GetMember(int id)
+        public async Task<ApiResponse> GetMember(int id)
         {
-            return true;  // Should return Task<Member>
+            return new ApiResponse(System.Net.HttpStatusCode.OK, new { MemberStuff = "" });  // Should return Task<Member>
         }
 
         // POST: api/v1/Members/
