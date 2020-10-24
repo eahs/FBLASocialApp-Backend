@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace ADSBackend.Controllers.Api.v1
 {
     [Produces("application/json")]
-    [Route("api/v1/News")]
+    [Route("api/v1/news")]
     public class NewsController : Controller
     {
         private readonly Services.Configuration Configuration;
@@ -21,7 +21,7 @@ namespace ADSBackend.Controllers.Api.v1
         }
 
         // GET: api/News
-        [HttpGet("News")]
+        [HttpGet]
         public async Task<List<NewsFeedItem>> GetFeed()
         {
             var newsUrl = new Uri("https://www.eastonsd.org/apps/news/news_rss.jsp");
@@ -36,19 +36,19 @@ namespace ADSBackend.Controllers.Api.v1
         }
 
         
-        [HttpPost("News")]
+        [HttpPost]
         public async Task<NewsFeedItem> CreateNewsFeedItem (NewsFeedItem item)
         {
             return item;
         }
 
-        [HttpPut("News/{id}")]
+        [HttpPut("{id}")]
         public async Task<NewsFeedItem> UpdateNewsFeedItem(int id, NewsFeedItem item)
         {
             return item;
         }
 
-        [HttpDelete("News/{id}")]
+        [HttpDelete("{id}")]
         public async Task<bool> DeleteNewsFeedItem(int id)
         {
             return true;
