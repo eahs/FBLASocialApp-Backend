@@ -25,14 +25,14 @@ namespace ADSBackend.Controllers.Api.v1
 
         [AllowAnonymous]
         [HttpPost("authenticate")]
-        public IActionResult Authenticate(AuthenticateRequest model)
+        public async Task<ApiResponse> Authenticate(AuthenticateRequest model)
         {
             var member = _userService.Authenticate(model);
 
             if (member == null)
-                return BadRequest(new { message = "Username or password is incorrect" });
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, model, "Username or password is incorrect");
 
-            return Ok(member);
+            return new ApiResponse(System.Net.HttpStatusCode.OK, member);
         }
 
         // GET: api/v1/Members/{id}
