@@ -19,6 +19,7 @@ namespace ADSBackend.Models
 		public DateTime EditedAt { get; set; }
 
 		public List<Reaction> Reactions { get; set; }
+		public Comment Parent { get; set; }
 
 	}
 }
