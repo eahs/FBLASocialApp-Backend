@@ -37,6 +37,8 @@ namespace ADSBackend.Services
         public AuthenticateResponse Authenticate(AuthenticateRequest model)
         {
             var member = _members.SingleOrDefault(x => x.Email == model.Email && x.Password == model.Password);
+            //var member = _members.SingleOrDefault(x => x.Email == model.Email && x.Password == PasswordHasher.Hash(model.Password, x.PasswordSalt).HashedPassword);
+
 
             // return null if user not found
             if (member == null) return null;
