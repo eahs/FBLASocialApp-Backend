@@ -17,6 +17,8 @@ namespace ADSBackend.Models
         [Display(Name = "Last Name")]
         public string LastName { get; set; }
 
+        public DateTime Birthday { get; set; }
+
         public string FullName { get; set; }
 
         public string Gender { get; set; }
