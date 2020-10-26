@@ -1,4 +1,5 @@
 ﻿using ADSBackend.Data;
+using ADSBackend.Models;
 using ADSBackend.Models.ApiModels;
 using ADSBackend.Models.AuthenticationModels;
 using ADSBackend.Services;
@@ -48,8 +49,9 @@ namespace ADSBackend.Controllers.Api.v1
         public async Task<ApiResponse> GetMember(int id)
         {
             //var member = await _context.Member.Include(m => m.Friends).ThenInclude(f => f.Friend).FirstOrDefaultAsync(m => m.MemberId == id);
+            var member = new Member();
 
-            return new ApiResponse(System.Net.HttpStatusCode.OK, new { MemberStuff = "" });  // Should return Task<Member>
+            return new ApiResponse(System.Net.HttpStatusCode.OK, member);  
         }
 
         // POST: api/v1/Members/
@@ -57,10 +59,15 @@ namespace ADSBackend.Controllers.Api.v1
         /// Create a new member
         /// </summary>
         /// <param name="item"></param>   
+        [AllowAnonymous]
         [HttpPost]
-        public async Task<NewsFeedItem> CreateMember (NewsFeedItem item)
+        public async Task<ApiResponse> CreateMember (Member member)
         {
-            return item;
+            var safemember = member;
+
+            // Validate email, password, firstname, lastname
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK, safemember);
         }
 
         // PUT: api/v1/Members/{id}
@@ -70,9 +77,9 @@ namespace ADSBackend.Controllers.Api.v1
         /// <param name="id"></param>   
         /// <param name="item"></param>   
         [HttpPut("{id}")]
-        public async Task<NewsFeedItem> UpdateMember(int id, NewsFeedItem item)
+        public async Task<ApiResponse> UpdateMember(int id, Member member)
         {
-            return item;
+            return new ApiResponse(System.Net.HttpStatusCode.OK, member);
         }
 
         // DELETE: api/v1/Members/{id}
