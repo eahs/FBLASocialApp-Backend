@@ -7,6 +7,6 @@ namespace ADSBackend.Helpers
 {
     public class AppSettings
     {
-        public string Secret { get; set; }
+        public string JWTTokenSecret { get; set; }
     }
 }
