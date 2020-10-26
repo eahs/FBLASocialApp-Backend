@@ -7,6 +7,13 @@ using System.Threading.Tasks;
 
 namespace ADSBackend.Models
 {
+	public enum PrivacyLevel
+    {
+		Public,
+		FriendsOnly,
+		Private
+    };
+
 	public class Post
 	{
 		[Key]
@@ -22,6 +29,7 @@ namespace ADSBackend.Models
 		public bool IsDeleted { get; set; } = false;
 		public List<PostReaction> Reactions { get; set; }
 		public List<PostComment> Comments { get; set; }
+		public PrivacyLevel PrivacyLevel { get; set; } = PrivacyLevel.Public;
 		public int FavoriteCount { get; set; }
 		public bool IsFeatured { get; set; }
 		[NotMapped]
