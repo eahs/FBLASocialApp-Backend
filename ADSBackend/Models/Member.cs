@@ -51,5 +51,6 @@ namespace ADSBackend.Models
         public int WallId { get; set; }
         public Wall Wall { get; set; }
         public List<MemberFriend> Friends { get; set; }
+        public List<ChatSessionMember> ChatSessions { get; set; }
     }
 }

@@ -12,14 +12,13 @@ namespace ADSBackend.Models
 		public int CommentId { get; set; }
 		public int AuthorId { get; set; }
 		public Member Author { get; set; }
-		public int ParentCommentId { get; set; }
 		public string Body { get; set; }
 		public string AdditionalData { get; set; } = "{}";
 		public DateTime CreatedAt { get; set; }
 		public DateTime EditedAt { get; set; }
 
 		public List<Reaction> Reactions { get; set; }
-		public Comment Parent { get; set; }
+
 
 	}
 }

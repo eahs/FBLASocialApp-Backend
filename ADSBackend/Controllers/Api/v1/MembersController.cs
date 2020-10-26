@@ -1,9 +1,11 @@
-﻿using ADSBackend.Models.ApiModels;
+﻿using ADSBackend.Data;
+using ADSBackend.Models.ApiModels;
 using ADSBackend.Models.AuthenticationModels;
 using ADSBackend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,10 +18,12 @@ namespace ADSBackend.Controllers.Api.v1
     [Route("api/v1/members")]
     public class MembersController : Controller
     {
+        private readonly ApplicationDbContext _context;
         private IUserService _userService;
 
-        public MembersController(IUserService userService)
+        public MembersController(ApplicationDbContext context, IUserService userService)
         {
+            _context = context;
             _userService = userService;
         }
 
@@ -43,6 +47,8 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet("{id}")]
         public async Task<ApiResponse> GetMember(int id)
         {
+            //var member = await _context.Member.Include(m => m.Friends).ThenInclude(f => f.Friend).FirstOrDefaultAsync(m => m.MemberId == id);
+
             return new ApiResponse(System.Net.HttpStatusCode.OK, new { MemberStuff = "" });  // Should return Task<Member>
         }
 
