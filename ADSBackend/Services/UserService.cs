@@ -18,18 +18,11 @@ namespace ADSBackend.Services
     public interface IUserService
     {
         Task<AuthenticateResponse> Authenticate(AuthenticateRequest model);
-        IEnumerable<Member> GetAll();
-        Member GetById(int id);
+        Task<Member> GetById(int id);
     }
 
     public class UserService : IUserService
     {
-        // users hardcoded for simplicity, store in a db with hashed passwords in production applications
-        private List<Member> _members = new List<Member>
-        {
-            new Member { MemberId = 1, FirstName = "Test", LastName = "User", Email = "test@gmail.com", Password = "test" }
-        };
-
         private readonly ApplicationDbContext _context;
         private readonly AppSettings _appSettings;
 
@@ -41,11 +34,7 @@ namespace ADSBackend.Services
 
         public async Task<AuthenticateResponse> Authenticate(AuthenticateRequest model)
         {
-            var member = _members.SingleOrDefault(x => x.Email == model.Email && x.Password == model.Password);
-
-            await Task.Delay(0);
-            //var member = await _context.Member.FirstOrDefaultAsync(x => x.Email == model.Email && 
-            //                                                            x.Password == PasswordHasher.Hash(model.Password, x.PasswordSalt).HashedPassword);
+            var member = await _context.Member.FirstOrDefaultAsync(x => x.Email == model.Email && x.Password == PasswordHasher.Hash(model.Password, x.PasswordSalt).HashedPassword);
                         
             // return null if user not found
             if (member == null) return null;
@@ -56,14 +45,9 @@ namespace ADSBackend.Services
             return new AuthenticateResponse(member, token);
         }
 
-        public IEnumerable<Member> GetAll()
+        public async Task<Member> GetById(int id)
         {
-            return _members;
-        }
-
-        public Member GetById(int id)
-        {
-            return _members.FirstOrDefault(x => x.MemberId == id);
+            return await _context.Member.FirstOrDefaultAsync(x => x.MemberId == id);
         }
 
         // helper methods
