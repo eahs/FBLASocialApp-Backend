@@ -74,40 +74,43 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpPost]
         public async Task<ApiResponse> CreateMember ([Bind ("FirstName,LastName,Birthday,Email,Password")]Member member)
         {
-            PasswordHash ph = PasswordHasher.Hash(member.Password);
-
+            PasswordHash ph = PasswordHasher.Hash(member.Password ?? "");
             var safemember = new Member
             {
-                Email = member.Email.Trim(),
-                FirstName = member.FirstName.Trim(),
-                LastName = member.LastName.Trim(),
+                Email = member.Email?.Trim() ?? "",
+                FirstName = member.FirstName?.Trim() ?? "",
+                LastName = member.LastName?.Trim() ?? "",
                 Birthday = member.Birthday,
                 Password = ph.HashedPassword,
                 PasswordSalt = ph.Salt,
                 Country = "US"
             };
-
+            // Create a new wall for this member
+            var wall = new Wall();
+            // Validate firstname
+            if (safemember.FirstName.Length == 0)
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "First name is missing");
+            // Validate lastname
+            if (safemember.LastName.Length == 0)
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Last name is missing");
             // Validate email
             if (safemember.Email.Length == 0 || !IsValidEmail(safemember.Email))
-                return new ApiResponse(System.Net.HttpStatusCode.Forbidden, member, "Email address is invalid");
-
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Email address is invalid");
             // Validate password (check member since safemember is already hashed)
             if (member.Password.Length < 8)
-                return new ApiResponse(System.Net.HttpStatusCode.Forbidden, member, "Password must be at least 8 characters");
-
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Password must be at least 8 characters");
             // Check to see if member already exists
             var _membercheck = await _context.Member.FirstOrDefaultAsync(m => m.Email == safemember.Email);
-
             if (_membercheck != null)
-                return new ApiResponse(System.Net.HttpStatusCode.Forbidden, member, "An account for this email already exists");
-
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "An account for this email already exists");
             // Passed checks so create member
+            _context.Wall.Add(wall);
+            await _context.SaveChangesAsync();
+            safemember.WallId = wall.WallId;
             _context.Member.Add(safemember);
             await _context.SaveChangesAsync();
-
             return new ApiResponse(System.Net.HttpStatusCode.OK, safemember);
         }
-
         // PUT: api/v1/Members/{id}
         /// <summary>
         /// Update an existing member
@@ -117,73 +120,40 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpPut("{id}")]
         public async Task<ApiResponse> UpdateMember(int id, [Bind("MemberId, FirstName, LastName, Birthday, Gender, Address, City, State, ZipCode, Country, PhoneNumber, profileImageSource, Description")]Member member)
         {
+            if (id != member.MemberId)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "MemberId does not match Id passed in URL");
+            }
             var httpUser = (Member) HttpContext.Items["User"];
             var newMember = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            
             if (newMember == null)
             {
-                return new ApiResponse(System.Net.HttpStatusCode.NotFound);
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, "User not found");
             } else if(newMember.MemberId != member.MemberId) // If the logged in user is not the same as the user they are trying to change
             {
-                return new ApiResponse(System.Net.HttpStatusCode.Forbidden);
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "MemberId does not match Logged In UserId");
             }
             
-            if(member.FirstName != null)
-			{
-                newMember.FirstName = member.FirstName;
-			}
-            if(member.LastName != null)
-			{
-                newMember.LastName = member.LastName;
-			}
-            if(member.Birthday != null)
-            {
-                DateTime date = Convert.ToDateTime(member.Birthday);
-                newMember.Birthday = date;
-			}
-            if(member.Gender != null)
-			{
-                newMember.Gender = member.Gender;
-			}
-            if(member.Address != null)
-			{
-                newMember.Address = member.Address;
-			}
-            if(member.City != null)
-			{
-                newMember.City = member.City;
-			}
-            if(member.State != null)
-			{
-                newMember.State = member.State;
-			}
-            if(member.ZipCode != null)
-			{
-                newMember.ZipCode = member.ZipCode;
-			}
-
-            if (member.Country != null)
-            {
-                newMember.Country = member.Country;
-            }
-
-            if (member.PhoneNumber != null)
-            {
-                newMember.PhoneNumber = member.PhoneNumber;
-            }
-
-            if (member.profileImageSource != null)
-            {
-                newMember.profileImageSource = member.profileImageSource;
-            }
-
-            if (member.Description != null)
-            {
-                newMember.Description = member.Description;
-            }
-
+            newMember.FirstName = member.FirstName ?? newMember.FirstName;
+            newMember.LastName = member.LastName ?? newMember.LastName;
+            newMember.Birthday = member.Birthday; // TODO: Check to see if the birthday is valid
+            newMember.Address = member.Address ?? newMember.Address;
+            newMember.Gender = member.Gender ?? newMember.Gender;
+            newMember.City = member.City ?? newMember.City;
+            newMember.State = member.State ?? newMember.State;
+            newMember.ZipCode = member.ZipCode ?? newMember.ZipCode;
+            newMember.Country = member.Country ?? newMember.Country;
+            newMember.PhoneNumber = member.PhoneNumber ?? newMember.PhoneNumber;
+            newMember.profileImageSource = member.profileImageSource ?? newMember.profileImageSource;
+            newMember.Description = member.Description ?? newMember.Description;
             newMember.FullName = newMember.FirstName + " " + newMember.LastName;
-
+            
+            _context.Member.Update(newMember);
+            await _context.SaveChangesAsync();
+            
             return new ApiResponse(System.Net.HttpStatusCode.OK, newMember);
+            
         }
 
         // DELETE: api/v1/Members/{id}
