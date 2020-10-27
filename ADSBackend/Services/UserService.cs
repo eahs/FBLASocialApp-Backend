@@ -34,10 +34,15 @@ namespace ADSBackend.Services
 
         public async Task<AuthenticateResponse> Authenticate(AuthenticateRequest model)
         {
-            var member = await _context.Member.FirstOrDefaultAsync(x => x.Email == model.Email && x.Password == PasswordHasher.Hash(model.Password, x.PasswordSalt).HashedPassword);
+            var member = await _context.Member.FirstOrDefaultAsync(x => x.Email == model.Email);
                         
             // return null if user not found
-            if (member == null) return null;
+            if (member == null) 
+                return null;
+
+            // Check password
+            if (member.Password != PasswordHasher.Hash(model.Password, member.PasswordSalt).HashedPassword)
+                return null;
 
             // authentication successful so generate jwt token
             var token = generateJwtToken(member);
