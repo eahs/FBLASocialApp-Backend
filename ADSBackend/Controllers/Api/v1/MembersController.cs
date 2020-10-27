@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -113,18 +115,75 @@ namespace ADSBackend.Controllers.Api.v1
         /// <param name="id"></param>   
         /// <param name="item"></param>   
         [HttpPut("{id}")]
-        public async Task<ApiResponse> UpdateMember(int id, [Bind("FirstName")]Member member)
+        public async Task<ApiResponse> UpdateMember(int id, [Bind("MemberId, FirstName, LastName, Birthday, Gender, Address, City, State, ZipCode, Country, PhoneNumber, profileImageSource, Description")]Member member)
         {
-            var emember = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == member.MemberId);
+            var httpUser = (Member) HttpContext.Items["User"];
+            var newMember = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            if (newMember == null)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound);
+            } else if(newMember.MemberId != member.MemberId) // If the logged in user is not the same as the user they are trying to change
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.Forbidden);
+            }
+            
+            if(member.FirstName != null)
+			{
+                newMember.FirstName = member.FirstName;
+			}
+            if(member.LastName != null)
+			{
+                newMember.LastName = member.LastName;
+			}
+            if(member.Birthday != null)
+            {
+                DateTime date = Convert.ToDateTime(member.Birthday);
+                newMember.Birthday = date;
+			}
+            if(member.Gender != null)
+			{
+                newMember.Gender = member.Gender;
+			}
+            if(member.Address != null)
+			{
+                newMember.Address = member.Address;
+			}
+            if(member.City != null)
+			{
+                newMember.City = member.City;
+			}
+            if(member.State != null)
+			{
+                newMember.State = member.State;
+			}
+            if(member.ZipCode != null)
+			{
+                newMember.ZipCode = member.ZipCode;
+			}
 
-            emember.FirstName = member.FirstName;
+            if (member.Country != null)
+            {
+                newMember.Country = member.Country;
+            }
 
+            if (member.PhoneNumber != null)
+            {
+                newMember.PhoneNumber = member.PhoneNumber;
+            }
 
-           
-            _context.Member.Update(emember);
-            await _context.SaveChangesAsync();
+            if (member.profileImageSource != null)
+            {
+                newMember.profileImageSource = member.profileImageSource;
+            }
 
-            return new ApiResponse(System.Net.HttpStatusCode.OK, emember);
+            if (member.Description != null)
+            {
+                newMember.Description = member.Description;
+            }
+
+            newMember.FullName = newMember.FirstName + " " + newMember.LastName;
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK, newMember);
         }
 
         // DELETE: api/v1/Members/{id}
