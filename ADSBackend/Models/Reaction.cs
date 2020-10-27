@@ -8,10 +8,10 @@ namespace ADSBackend.Models
 {
 	public enum ReactionTypes
     {
-		Like,
-		Love,
-		Surprised,
-		Curious
+		Like = 1,
+		Love = 2,
+		Surprised = 3,
+		Curious = 4
     }
 
 	public class Reaction

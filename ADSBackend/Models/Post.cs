@@ -9,9 +9,9 @@ namespace ADSBackend.Models
 {
 	public enum PrivacyLevel
     {
-		Public,
-		FriendsOnly,
-		Private
+		Public = 0,
+		FriendsOnly = 1,
+		Private = 2
     };
 
 	public class Post

@@ -9,12 +9,15 @@ using System.Text;
 using ADSBackend.Helpers;
 using ADSBackend.Models;
 using ADSBackend.Models.AuthenticationModels;
+using ADSBackend.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace ADSBackend.Services
 {
     public interface IUserService
     {
-        AuthenticateResponse Authenticate(AuthenticateRequest model);
+        Task<AuthenticateResponse> Authenticate(AuthenticateRequest model);
         IEnumerable<Member> GetAll();
         Member GetById(int id);
     }
@@ -27,19 +30,23 @@ namespace ADSBackend.Services
             new Member { MemberId = 1, FirstName = "Test", LastName = "User", Email = "test@gmail.com", Password = "test" }
         };
 
+        private readonly ApplicationDbContext _context;
         private readonly AppSettings _appSettings;
 
-        public UserService(IOptions<AppSettings> appSettings)
+        public UserService(IOptions<AppSettings> appSettings, ApplicationDbContext context)
         {
             _appSettings = appSettings.Value;
+            _context = context;
         }
 
-        public AuthenticateResponse Authenticate(AuthenticateRequest model)
+        public async Task<AuthenticateResponse> Authenticate(AuthenticateRequest model)
         {
             var member = _members.SingleOrDefault(x => x.Email == model.Email && x.Password == model.Password);
-            //var member = _members.SingleOrDefault(x => x.Email == model.Email && x.Password == PasswordHasher.Hash(model.Password, x.PasswordSalt).HashedPassword);
 
-
+            await Task.Delay(0);
+            //var member = await _context.Member.FirstOrDefaultAsync(x => x.Email == model.Email && 
+            //                                                            x.Password == PasswordHasher.Hash(model.Password, x.PasswordSalt).HashedPassword);
+                        
             // return null if user not found
             if (member == null) return null;
 
