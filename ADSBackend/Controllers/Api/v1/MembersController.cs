@@ -111,28 +111,21 @@ namespace ADSBackend.Controllers.Api.v1
             await _context.SaveChangesAsync();
             return new ApiResponse(System.Net.HttpStatusCode.OK, safemember);
         }
-        // PUT: api/v1/Members/{id}
+
+        // PUT: api/v1/members/
         /// <summary>
         /// Update an existing member
         /// </summary>
-        /// <param name="id"></param>   
-        /// <param name="item"></param>   
-        [HttpPut("{id}")]
-        public async Task<ApiResponse> UpdateMember(int id, [Bind("MemberId, FirstName, LastName, Birthday, Gender, Address, City, State, ZipCode, Country, PhoneNumber, profileImageSource, Description")]Member member)
+        /// <param name="member"></param>   
+        [HttpPut]
+        public async Task<ApiResponse> UpdateMember([Bind("FirstName, LastName, Birthday, Gender, Address, City, State, ZipCode, Country, PhoneNumber, profileImageSource, Description")]Member member)
         {
-            if (id != member.MemberId)
-            {
-                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "MemberId does not match Id passed in URL");
-            }
             var httpUser = (Member) HttpContext.Items["User"];
             var newMember = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
             
             if (newMember == null)
             {
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, "User not found");
-            } else if(newMember.MemberId != member.MemberId) // If the logged in user is not the same as the user they are trying to change
-            {
-                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "MemberId does not match Logged In UserId");
             }
             
             newMember.FirstName = member.FirstName ?? newMember.FirstName;
