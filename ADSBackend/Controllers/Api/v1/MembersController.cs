@@ -85,30 +85,40 @@ namespace ADSBackend.Controllers.Api.v1
                 PasswordSalt = ph.Salt,
                 Country = "US"
             };
+
             // Create a new wall for this member
             var wall = new Wall();
+
             // Validate firstname
             if (safemember.FirstName.Length == 0)
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "First name is missing");
+
             // Validate lastname
             if (safemember.LastName.Length == 0)
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Last name is missing");
+
             // Validate email
             if (safemember.Email.Length == 0 || !IsValidEmail(safemember.Email))
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Email address is invalid");
+
             // Validate password (check member since safemember is already hashed)
             if (member.Password.Length < 8)
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Password must be at least 8 characters");
+
             // Check to see if member already exists
             var _membercheck = await _context.Member.FirstOrDefaultAsync(m => m.Email == safemember.Email);
             if (_membercheck != null)
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "An account for this email already exists");
+
             // Passed checks so create member
             _context.Wall.Add(wall);
             await _context.SaveChangesAsync();
+
             safemember.WallId = wall.WallId;
+
             _context.Member.Add(safemember);
             await _context.SaveChangesAsync();
+
             return new ApiResponse(System.Net.HttpStatusCode.OK, safemember);
         }
 
