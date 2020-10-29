@@ -1,7 +1,8 @@
 ﻿using System;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace ADSBackend.Migrations
+namespace YakkaApp.Migrations
 {
     public partial class Initial : Migration
     {
@@ -12,7 +13,7 @@ namespace ADSBackend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Name = table.Column<string>(maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(nullable: true)
@@ -27,7 +28,7 @@ namespace ADSBackend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     UserName = table.Column<string>(maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(maxLength: 256, nullable: true),
                     Email = table.Column<string>(maxLength: 256, nullable: true),
@@ -55,7 +56,7 @@ namespace ADSBackend.Migrations
                 columns: table => new
                 {
                     ChatSessionId = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1")
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn)
                 },
                 constraints: table =>
                 {
@@ -79,7 +80,7 @@ namespace ADSBackend.Migrations
                 columns: table => new
                 {
                     WallId = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1")
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn)
                 },
                 constraints: table =>
                 {
@@ -91,7 +92,7 @@ namespace ADSBackend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     RoleId = table.Column<int>(nullable: false),
                     ClaimType = table.Column<string>(nullable: true),
                     ClaimValue = table.Column<string>(nullable: true)
@@ -112,7 +113,7 @@ namespace ADSBackend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     UserId = table.Column<int>(nullable: false),
                     ClaimType = table.Column<string>(nullable: true),
                     ClaimValue = table.Column<string>(nullable: true)
@@ -197,9 +198,10 @@ namespace ADSBackend.Migrations
                 columns: table => new
                 {
                     MemberId = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     FirstName = table.Column<string>(nullable: true),
                     LastName = table.Column<string>(nullable: true),
+                    Birthday = table.Column<DateTime>(nullable: false),
                     FullName = table.Column<string>(nullable: true),
                     Gender = table.Column<string>(nullable: true),
                     Address = table.Column<string>(nullable: true),
@@ -231,7 +233,7 @@ namespace ADSBackend.Migrations
                 columns: table => new
                 {
                     MessageId = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     AuthorId = table.Column<int>(nullable: false),
                     Body = table.Column<string>(nullable: true),
                     Image = table.Column<string>(nullable: true),
@@ -285,7 +287,7 @@ namespace ADSBackend.Migrations
                 columns: table => new
                 {
                     CommentId = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     AuthorId = table.Column<int>(nullable: false),
                     Body = table.Column<string>(nullable: true),
                     AdditionalData = table.Column<string>(nullable: true),
@@ -331,7 +333,7 @@ namespace ADSBackend.Migrations
                 columns: table => new
                 {
                     PostId = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     AuthorId = table.Column<int>(nullable: false),
                     Title = table.Column<string>(nullable: true),
                     Body = table.Column<string>(nullable: true),
@@ -340,6 +342,7 @@ namespace ADSBackend.Migrations
                     CreatedAt = table.Column<DateTime>(nullable: false),
                     EditedAt = table.Column<DateTime>(nullable: false),
                     IsDeleted = table.Column<bool>(nullable: false),
+                    PrivacyLevel = table.Column<int>(nullable: false),
                     FavoriteCount = table.Column<int>(nullable: false),
                     IsFeatured = table.Column<bool>(nullable: false)
                 },
@@ -359,7 +362,7 @@ namespace ADSBackend.Migrations
                 columns: table => new
                 {
                     ReactionId = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     ReactionType = table.Column<int>(nullable: false),
                     MemberId = table.Column<int>(nullable: false),
                     CommentId = table.Column<int>(nullable: true)
@@ -459,8 +462,7 @@ namespace ADSBackend.Migrations
                 name: "RoleNameIndex",
                 table: "AspNetRoles",
                 column: "NormalizedName",
-                unique: true,
-                filter: "[NormalizedName] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserClaims_UserId",
@@ -486,8 +488,7 @@ namespace ADSBackend.Migrations
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
-                unique: true,
-                filter: "[NormalizedUserName] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ChatMessage_AuthorId",

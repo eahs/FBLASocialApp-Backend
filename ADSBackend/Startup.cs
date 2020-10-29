@@ -45,8 +45,17 @@ namespace ADSBackend
             services.AddCors();
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseSqlServer(ConnString);
+                // options.UseSqlServer(Configuration.GetConnectionString("ScholarshipsContext"));
+                options.UseMySql(
+                    ConnString,
+                    mySqlOptions =>
+                    {
+                        mySqlOptions.ServerVersion(new Version(10, 4, 11),
+                            Pomelo.EntityFrameworkCore.MySql.Infrastructure.ServerType.MariaDb); // replace with your Server Version and Type
+                    });
+
             });
+
 
             services.AddIdentity<ApplicationUser, ApplicationRole>()
                     .AddEntityFrameworkStores<ApplicationDbContext>()
