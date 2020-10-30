@@ -73,6 +73,7 @@ namespace ADSBackend.Controllers.Api.v1
         }
 
         private const string createMemberBindingFields = "FirstName,LastName,Birthday,Email,Password,Country";
+        private const string updateMemberBindingFields = "FirstName, LastName, Birthday, Gender, Address, City, State, ZipCode, Country, PhoneNumber, profileImageSource, Description";
 
         // POST: api/v1/Members/
         /// <summary>
@@ -102,6 +103,7 @@ namespace ADSBackend.Controllers.Api.v1
                 if (!IsValidEmail(safemember.Email))
                     ModelState.AddModelError("Email", "Email address is invalid");
                 
+                // Return all validation errors
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "An error has occurred", ModelState);
             }
 
@@ -136,7 +138,7 @@ namespace ADSBackend.Controllers.Api.v1
         /// </summary>
         /// <param name="member"></param>   
         [HttpPut]
-        public async Task<ApiResponse> UpdateMember([Bind("FirstName, LastName, Birthday, Gender, Address, City, State, ZipCode, Country, PhoneNumber, profileImageSource, Description")]Member member)
+        public async Task<ApiResponse> UpdateMember([Bind(updateMemberBindingFields)]Member member)
         {
             var httpUser = (Member) HttpContext.Items["User"];
             var newMember = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
@@ -158,7 +160,20 @@ namespace ADSBackend.Controllers.Api.v1
             newMember.PhoneNumber = member.PhoneNumber ?? newMember.PhoneNumber;
             newMember.profileImageSource = member.profileImageSource ?? newMember.profileImageSource;
             newMember.Description = member.Description ?? newMember.Description;
-            
+
+            TryValidateModel(newMember);
+            ModelState.Scrub(updateMemberBindingFields);  // Remove all errors that aren't related to the binding fields
+
+            if (!ModelState.IsValid)
+            {
+                // Validate email
+                if (!IsValidEmail(newMember.Email))
+                    ModelState.AddModelError("Email", "Email address is invalid");
+
+                // Return all validation errors
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "An error has occurred", ModelState);
+            }
+
             _context.Member.Update(newMember);
             await _context.SaveChangesAsync();
             
