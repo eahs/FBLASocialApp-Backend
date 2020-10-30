@@ -72,7 +72,7 @@ namespace ADSBackend.Controllers.Api.v1
         /// <param name="member"></param>
         [AllowAnonymous]
         [HttpPost]
-        public async Task<ApiResponse> CreateMember ([Bind ("FirstName,LastName,Birthday,Email,Password")]Member member)
+        public async Task<ApiResponse> CreateMember ([Bind ("FirstName,LastName,Birthday,Email,Password,Country,Gender")]Member member)
         {
             PasswordHash ph = PasswordHasher.Hash(member.Password ?? "");
             var safemember = new Member
@@ -80,24 +80,31 @@ namespace ADSBackend.Controllers.Api.v1
                 Email = member.Email?.Trim() ?? "",
                 FirstName = member.FirstName?.Trim() ?? "",
                 LastName = member.LastName?.Trim() ?? "",
+                FullName = member.FirstName + " " + member.LastName,
                 Birthday = member.Birthday,
                 Password = ph.HashedPassword,
                 PasswordSalt = ph.Salt,
-                Country = "US"
+                Country = member.Country ?? "US",
+                Gender = member.Gender
             };
+
 
             // Create a new wall for this member
             var wall = new Wall();
-
-            // Validate firstname
+            
+            // Check For Missing Fields
+            
             if (safemember.FirstName.Length == 0)
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "First name is missing");
-
-            // Validate lastname
+            
             if (safemember.LastName.Length == 0)
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Last name is missing");
 
-            // Validate email
+            if (safemember.Gender.Length == 0)
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Gender is missing");
+            
+            // Field Validation
+            
             if (safemember.Email.Length == 0 || !IsValidEmail(safemember.Email))
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Email address is invalid");
 
@@ -110,6 +117,7 @@ namespace ADSBackend.Controllers.Api.v1
             if (_membercheck != null)
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "An account for this email already exists");
 
+            
             // Passed checks so create member
             _context.Wall.Add(wall);
             await _context.SaveChangesAsync();
