@@ -7,6 +7,7 @@ using ADSBackend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using YakkaApp.Helpers;
 
 namespace ADSBackend.Controllers.Api.v1
 {
@@ -59,11 +61,18 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet("{id}")]
         public async Task<ApiResponse> GetMember(int id)
         {
-            //var member = await _context.Member.Include(m => m.Friends).ThenInclude(f => f.Friend).FirstOrDefaultAsync(m => m.MemberId == id);
-            var member = new Member();
+            var httpUser = (Member)HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.Friends)
+                                              .ThenInclude(f => f.Friend)
+                                              .FirstOrDefaultAsync(m => m.MemberId == id);
+
+            // TODO: Strip all data that isn't supposed to be public from this api response
 
             return new ApiResponse(System.Net.HttpStatusCode.OK, member);  
         }
+
+        private const string createMemberBindingFields = "FirstName,LastName,Birthday,Email,Password,Country";
 
         // POST: api/v1/Members/
         /// <summary>
@@ -72,43 +81,42 @@ namespace ADSBackend.Controllers.Api.v1
         /// <param name="member"></param>
         [AllowAnonymous]
         [HttpPost]
-        public async Task<ApiResponse> CreateMember ([Bind ("FirstName,LastName,Birthday,Email,Password")]Member member)
+        public async Task<ApiResponse> CreateMember ([Bind (createMemberBindingFields)]Member member)
         {
-            PasswordHash ph = PasswordHasher.Hash(member.Password ?? "");
             var safemember = new Member
             {
                 Email = member.Email?.Trim() ?? "",
                 FirstName = member.FirstName?.Trim() ?? "",
                 LastName = member.LastName?.Trim() ?? "",
                 Birthday = member.Birthday,
-                Password = ph.HashedPassword,
-                PasswordSalt = ph.Salt,
-                Country = "US"
+                Password = member.Password ?? "",                
+                Country = member.Country ?? "US"
             };
+            
+            TryValidateModel(safemember);
+            ModelState.Scrub(createMemberBindingFields);  // Remove all errors that aren't related to the binding fields
 
-            // Create a new wall for this member
-            var wall = new Wall();
-
-            // Validate firstname
-            if (safemember.FirstName.Length == 0)
-                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "First name is missing");
-
-            // Validate lastname
-            if (safemember.LastName.Length == 0)
-                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Last name is missing");
-
-            // Validate email
-            if (safemember.Email.Length == 0 || !IsValidEmail(safemember.Email))
-                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Email address is invalid");
-
-            // Validate password (check member since safemember is already hashed)
-            if (member.Password.Length < 8)
-                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "Password must be at least 8 characters");
+            if (!ModelState.IsValid)
+            {
+                // Validate email
+                if (!IsValidEmail(safemember.Email))
+                    ModelState.AddModelError("Email", "Email address is invalid");
+                
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "An error has occurred", ModelState);
+            }
 
             // Check to see if member already exists
             var _membercheck = await _context.Member.FirstOrDefaultAsync(m => m.Email == safemember.Email);
             if (_membercheck != null)
-                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, member, "An account for this email already exists");
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "An account for this email already exists");
+
+            // Securely hash the member password
+            PasswordHash ph = PasswordHasher.Hash(member.Password ?? "");
+            safemember.Password = ph.HashedPassword;
+            safemember.PasswordSalt = ph.Salt;
+
+            // Create a new wall for this member
+            var wall = new Wall();
 
             // Passed checks so create member
             _context.Wall.Add(wall);
@@ -150,7 +158,6 @@ namespace ADSBackend.Controllers.Api.v1
             newMember.PhoneNumber = member.PhoneNumber ?? newMember.PhoneNumber;
             newMember.profileImageSource = member.profileImageSource ?? newMember.profileImageSource;
             newMember.Description = member.Description ?? newMember.Description;
-            newMember.FullName = newMember.FirstName + " " + newMember.LastName;
             
             _context.Member.Update(newMember);
             await _context.SaveChangesAsync();
