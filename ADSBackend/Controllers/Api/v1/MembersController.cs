@@ -99,10 +99,6 @@ namespace ADSBackend.Controllers.Api.v1
 
             if (!ModelState.IsValid)
             {
-                // Validate email
-                if (!IsValidEmail(safemember.Email))
-                    ModelState.AddModelError("Email", "Email address is invalid");
-                
                 // Return all validation errors
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "An error has occurred", ModelState);
             }
@@ -164,12 +160,11 @@ namespace ADSBackend.Controllers.Api.v1
             TryValidateModel(newMember);
             ModelState.Scrub(updateMemberBindingFields);  // Remove all errors that aren't related to the binding fields
 
+            // Add custom errors to fields
+            //ModelState.AddModelError("Email", "Something else with email is wrong");
+          
             if (!ModelState.IsValid)
             {
-                // Validate email
-                if (!IsValidEmail(newMember.Email))
-                    ModelState.AddModelError("Email", "Email address is invalid");
-
                 // Return all validation errors
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "An error has occurred", ModelState);
             }
