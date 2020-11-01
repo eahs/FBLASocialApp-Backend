@@ -7,16 +7,28 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ADSBackend.Data;
 using ADSBackend.Models;
+using ADSBackend.Models.Identity;
+using ADSBackend.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace YakkaApp.Controllers
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [Authorize(Roles = "Admin")]
     public class PostsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly IEmailSender _emailSender;
 
-        public PostsController(ApplicationDbContext context)
+        public PostsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IEmailSender emailSender)
         {
             _context = context;
+            _userManager = userManager;
+            _roleManager = roleManager;
+            _emailSender = emailSender;
         }
 
         // GET: Posts
