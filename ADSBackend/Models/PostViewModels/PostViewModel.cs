@@ -22,7 +22,7 @@ namespace ADSBackend.Models
         [Required]
         public DateTime CreatedAt { get; set; }
         public PrivacyLevel PrivacyLevel { get; set; } = PrivacyLevel.Public;
-        public bool IsFeatured { get; set; }
+        public bool IsFeatured { get; set; } = false;
 
     }
 }
