@@ -79,7 +79,7 @@ namespace YakkaApp.Controllers.Api.v1
         /// </summary>
         /// <param name="postId"></param>
         /// <returns></returns>
-        [HttpDelete]
+        [HttpDelete("{postId}")]
         public async Task<ApiResponse> DeletePost(int postId)
         {
             return new ApiResponse(System.Net.HttpStatusCode.OK, null);
