@@ -48,7 +48,7 @@ namespace ADSBackend.Controllers.Api.v1
             var member = await _userService.Authenticate(model);
 
             if (member == null)
-                return new ApiResponse(System.Net.HttpStatusCode.NotFound, model, "Username or password is incorrect");
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, model, "Email or password is incorrect");
 
             return new ApiResponse(System.Net.HttpStatusCode.OK, member);
         }
