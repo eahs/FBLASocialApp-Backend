@@ -31,9 +31,8 @@ namespace ADSBackend.Models
 		public List<PostComment> Comments { get; set; }
 		public PrivacyLevel PrivacyLevel { get; set; } = PrivacyLevel.Public;
 		public int FavoriteCount { get; set; }
-		public bool IsFeatured { get; set; }
-		[NotMapped]
-		public bool IsFavorite { get; set; }
+		public bool IsFeatured { get; set; } = false;
+		[NotMapped] public bool IsFavorite { get; set; } = false;
 
 	}
 }
