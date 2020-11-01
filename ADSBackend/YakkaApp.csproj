@@ -52,4 +52,12 @@
     <None Include="wwwroot\lib\inspinia\plugins\slimscroll\jquery.slimscroll.min.js" />
   </ItemGroup>
 
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Views\Posts\Create.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Posts\Delete.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Posts\Details.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Posts\Edit.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Posts\Index.cshtml" />
+  </ItemGroup>
+
 </Project>
