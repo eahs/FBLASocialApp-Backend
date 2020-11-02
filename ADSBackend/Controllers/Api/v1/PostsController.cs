@@ -6,6 +6,8 @@ using ADSBackend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using YakkaApp.Helpers;
 
 namespace YakkaApp.Controllers.Api.v1
 {
@@ -17,8 +19,8 @@ namespace YakkaApp.Controllers.Api.v1
         private readonly ApplicationDbContext _context;
         private readonly IUserService _userService;
 
-        private const string CreatePostBindingFields = "PostId,AuthorId,Title,Body,Image,IsMachinePost,CreatedAt,PrivacyLevel,IsFeatured";
-        private const string UpdatePostBindingFields = "PostId,Title,Body,EditedAt,PrivacyLevel,IsFeatured";
+        private const string CreatePostBindingFields = "AuthorId,Title,Body,Image,IsMachinePost,CreatedAt,PrivacyLevel,IsFeatured";
+        private const string UpdatePostBindingFields = "AuthorId,Title,Body,EditedAt,PrivacyLevel,IsFeatured";
 
         public PostsController(ApplicationDbContext context, IUserService userService)
         {
@@ -58,7 +60,34 @@ namespace YakkaApp.Controllers.Api.v1
         [HttpPost]
         public async Task<ApiResponse> CreatePost([Bind(CreatePostBindingFields)]Post post)
         {
-            return new ApiResponse(System.Net.HttpStatusCode.OK, null);
+            var author = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == post.AuthorId);
+            if (author == null)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, post, "Please provide a valid AuthorId", ModelState);
+            }
+            var safePost = new Post
+            {
+                AuthorId = post.AuthorId,
+                Title = post.Title ?? "",
+                Body = post.Body ?? "",
+                Image = post.Image ?? "",
+                IsMachinePost = post.IsMachinePost, // Defaults to false in the model
+                CreatedAt = post.CreatedAt, // Is required in the model, handled by the app.
+                PrivacyLevel = post.PrivacyLevel, // Defaults to 0(public) in the model
+                IsFeatured = post.IsFeatured // Defaults to false in in the model
+            };
+
+            TryValidateModel(safePost);
+            ModelState.Scrub(CreatePostBindingFields);
+
+            if (!ModelState.IsValid)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "An error has occured", ModelState);
+            }
+
+            _context.Post.Add(safePost);
+            await _context.SaveChangesAsync();
+            return new ApiResponse(System.Net.HttpStatusCode.OK, safePost);
         }
         
         // PUT: api/v1/posts/
