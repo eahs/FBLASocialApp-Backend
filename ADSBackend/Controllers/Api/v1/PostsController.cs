@@ -19,8 +19,8 @@ namespace YakkaApp.Controllers.Api.v1
         private readonly ApplicationDbContext _context;
         private readonly IUserService _userService;
 
-        private const string CreatePostBindingFields = "AuthorId,Title,Body,Image,IsMachinePost,CreatedAt,PrivacyLevel,IsFeatured";
-        private const string UpdatePostBindingFields = "AuthorId,Title,Body,EditedAt,PrivacyLevel,IsFeatured";
+        private const string CreatePostBindingFields = "AuthorId,Title,Body,Image,CreatedAt,PrivacyLevel,IsFeatured";
+        private const string UpdatePostBindingFields = "PostId,AuthorId,Title,Body,EditedAt,PrivacyLevel,IsFeatured";
 
         public PostsController(ApplicationDbContext context, IUserService userService)
         {
@@ -34,7 +34,7 @@ namespace YakkaApp.Controllers.Api.v1
         /// </summary>
         /// <param name="memberId"></param>
         /// <returns></returns>
-        [HttpGet("{memberId}")]
+        [HttpGet("{id}")]
         public async Task<ApiResponse> GetPosts(int memberId)
         {
             return new ApiResponse(System.Net.HttpStatusCode.OK, null);
@@ -46,7 +46,7 @@ namespace YakkaApp.Controllers.Api.v1
         /// </summary>
         /// <param name="postId"></param>
         /// <returns></returns>
-        [HttpGet("{postId}")]
+        [HttpGet("{id}")]
         public async Task<ApiResponse> GetPost(int postId)
         {
             return new ApiResponse(System.Net.HttpStatusCode.OK, null);
@@ -71,7 +71,6 @@ namespace YakkaApp.Controllers.Api.v1
                 Title = post.Title ?? "",
                 Body = post.Body ?? "",
                 Image = post.Image ?? "",
-                IsMachinePost = post.IsMachinePost, // Defaults to false in the model
                 CreatedAt = post.CreatedAt, // Is required in the model, handled by the app.
                 PrivacyLevel = post.PrivacyLevel, // Defaults to 0(public) in the model
                 IsFeatured = post.IsFeatured // Defaults to false in in the model
@@ -108,7 +107,7 @@ namespace YakkaApp.Controllers.Api.v1
         /// </summary>
         /// <param name="postId"></param>
         /// <returns></returns>
-        [HttpDelete("{postId}")]
+        [HttpDelete("{id}")]
         public async Task<ApiResponse> DeletePost(int postId)
         {
             return new ApiResponse(System.Net.HttpStatusCode.OK, null);
