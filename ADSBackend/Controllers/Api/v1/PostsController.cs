@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RestSharp;
 using YakkaApp.Helpers;
 
 namespace YakkaApp.Controllers.Api.v1
@@ -19,8 +20,8 @@ namespace YakkaApp.Controllers.Api.v1
         private readonly ApplicationDbContext _context;
         private readonly IUserService _userService;
 
-        private const string CreatePostBindingFields = "AuthorId,Title,Body,Image,CreatedAt,PrivacyLevel,IsFeatured";
-        private const string UpdatePostBindingFields = "PostId,AuthorId,Title,Body,EditedAt,PrivacyLevel,IsFeatured";
+        private const string CreatePostBindingFields = "Title,Body,Image,CreatedAt,PrivacyLevel,IsFeatured";
+        private const string UpdatePostBindingFields = "PostId,Title,Body,EditedAt,PrivacyLevel,IsFeatured";
 
         public PostsController(ApplicationDbContext context, IUserService userService)
         {
@@ -60,14 +61,15 @@ namespace YakkaApp.Controllers.Api.v1
         [HttpPost]
         public async Task<ApiResponse> CreatePost([Bind(CreatePostBindingFields)]Post post)
         {
-            var author = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == post.AuthorId);
-            if (author == null)
+            var httpUser = (Member) HttpContext.Items["User"];
+            var member = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            if (member == null)
             {
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, post, "Please provide a valid AuthorId", ModelState);
             }
             var safePost = new Post
             {
-                AuthorId = post.AuthorId,
+                AuthorId = httpUser.MemberId,
                 Title = post.Title ?? "",
                 Body = post.Body ?? "",
                 Image = post.Image ?? "",
