@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using ADSBackend.Controllers.Api.v1;
 using ADSBackend.Data;
 using ADSBackend.Models;
@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestSharp;
-using YakkaApp.Helpers;
+using ADSBackend.Helpers;
 
-namespace YakkaApp.Controllers.Api.v1
+namespace ADSBackend.Controllers.Api.v1
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Produces("application/json")]
@@ -72,7 +72,6 @@ namespace YakkaApp.Controllers.Api.v1
                 AuthorId = httpUser.MemberId,
                 Title = post.Title ?? "",
                 Body = post.Body ?? "",
-                Image = post.Image ?? "",
                 CreatedAt = post.CreatedAt, // Is required in the model, handled by the app.
                 PrivacyLevel = post.PrivacyLevel, // Defaults to 0(public) in the model
                 IsFeatured = post.IsFeatured // Defaults to false in in the model

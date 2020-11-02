@@ -1,4 +1,4 @@
-﻿using ADSBackend.Models;
+using ADSBackend.Models;
 using ADSBackend.Models.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -80,10 +80,15 @@ namespace ADSBackend.Data
             builder.Entity<ChatSessionMember>()
                 .HasOne(c => c.Member)
                 .WithMany(m => m.ChatSessions)
-                .HasForeignKey(m => m.MemberId);
+                .HasForeignKey(m => m.MemberId);           
 
+            builder.Entity<PostPhoto>()
+                .HasKey(t => new { t.PostId, t.PhotoId });
 
-            
+            builder.Entity<PostPhoto>()
+                .HasOne(p => p.Post)
+                .WithMany(p => p.Images)
+                .HasForeignKey(p => p.PostId);
         }
     }
 }

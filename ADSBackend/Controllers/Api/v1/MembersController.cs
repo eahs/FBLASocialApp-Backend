@@ -16,7 +16,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using YakkaApp.Helpers;
 
 namespace ADSBackend.Controllers.Api.v1
 {

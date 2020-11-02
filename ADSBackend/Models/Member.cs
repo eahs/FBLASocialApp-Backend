@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -52,8 +53,8 @@ namespace ADSBackend.Models
 
         [DataType(DataType.PhoneNumber)]
         public string PhoneNumber { get; set; }
-        
-        public int? ProfilePhotoId { get; set; }
+
+        public int? ProfilePhotoPhotoId { get; set; }
         
         [Display(Name = "Profile Picture")]
         public Photo ProfilePhoto { get; set; }
