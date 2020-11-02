@@ -52,9 +52,11 @@ namespace ADSBackend.Models
 
         [DataType(DataType.PhoneNumber)]
         public string PhoneNumber { get; set; }
-
+        
+        public int? ProfilePhotoId { get; set; }
+        
         [Display(Name = "Profile Picture")]
-        public string profileImageSource { get; set; }
+        public Photo ProfilePhoto { get; set; }
 
         [Display(Name = "Bio")]
         public string Description { get; set; }
