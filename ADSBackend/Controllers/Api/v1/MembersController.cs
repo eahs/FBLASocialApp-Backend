@@ -72,8 +72,8 @@ namespace ADSBackend.Controllers.Api.v1
             return new ApiResponse(System.Net.HttpStatusCode.OK, member);  
         }
 
-        private const string createMemberBindingFields = "FirstName,LastName,Birthday,Email,Password,Country";
-        private const string updateMemberBindingFields = "FirstName, LastName, Birthday, Gender, Address, City, State, ZipCode, Country, PhoneNumber, profileImageSource, Description";
+        private const string CreateMemberBindingFields = "FirstName,LastName,Birthday,Email,Password,Country";
+        private const string UpdateMemberBindingFields = "FirstName, LastName, Birthday, Gender, Address, City, State, ZipCode, Country, PhoneNumber, Description";
 
         // POST: api/v1/Members/
         /// <summary>
@@ -82,7 +82,7 @@ namespace ADSBackend.Controllers.Api.v1
         /// <param name="member"></param>
         [AllowAnonymous]
         [HttpPost]
-        public async Task<ApiResponse> CreateMember ([Bind (createMemberBindingFields)]Member member)
+        public async Task<ApiResponse> CreateMember ([Bind (CreateMemberBindingFields)]Member member)
         {
             var safemember = new Member
             {
@@ -95,7 +95,7 @@ namespace ADSBackend.Controllers.Api.v1
             };
             
             TryValidateModel(safemember);
-            ModelState.Scrub(createMemberBindingFields);  // Remove all errors that aren't related to the binding fields
+            ModelState.Scrub(CreateMemberBindingFields);  // Remove all errors that aren't related to the binding fields
 
             if (!ModelState.IsValid)
             {
@@ -134,7 +134,7 @@ namespace ADSBackend.Controllers.Api.v1
         /// </summary>
         /// <param name="member"></param>   
         [HttpPut]
-        public async Task<ApiResponse> UpdateMember([Bind(updateMemberBindingFields)]Member member)
+        public async Task<ApiResponse> UpdateMember([Bind(UpdateMemberBindingFields)]Member member)
         {
             var httpUser = (Member) HttpContext.Items["User"];
             var newMember = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
@@ -154,11 +154,10 @@ namespace ADSBackend.Controllers.Api.v1
             newMember.ZipCode = member.ZipCode ?? newMember.ZipCode;
             newMember.Country = member.Country ?? newMember.Country;
             newMember.PhoneNumber = member.PhoneNumber ?? newMember.PhoneNumber;
-            newMember.profileImageSource = member.profileImageSource ?? newMember.profileImageSource;
             newMember.Description = member.Description ?? newMember.Description;
 
             TryValidateModel(newMember);
-            ModelState.Scrub(updateMemberBindingFields);  // Remove all errors that aren't related to the binding fields
+            ModelState.Scrub(UpdateMemberBindingFields);  // Remove all errors that aren't related to the binding fields
 
             // Add custom errors to fields
             //ModelState.AddModelError("Email", "Something else with email is wrong");
