@@ -13,6 +13,7 @@ namespace ADSBackend.Data
         }
 
         public DbSet<ConfigurationItem> ConfigurationItem { get; set; }
+        public DbSet<Photo> Photo { get; set; }
         public DbSet<Member> Member { get; set; }
         public DbSet<ChatMessage> ChatMessage { get; set; }
         public DbSet<ChatSession> ChatSession { get; set; }
