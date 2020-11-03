@@ -62,11 +62,13 @@ namespace ADSBackend.Controllers.Api.v1
         public async Task<ApiResponse> CreatePost([Bind(CreatePostBindingFields)]Post post)
         {
             var httpUser = (Member) HttpContext.Items["User"];
+
             var member = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
             if (member == null)
             {
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, post, "Please provide a valid AuthorId", ModelState);
             }
+
             var safePost = new Post
             {
                 AuthorId = httpUser.MemberId,

@@ -72,7 +72,7 @@ namespace ADSBackend.Controllers.Api.v1
         }
 
         private const string CreateMemberBindingFields = "FirstName,LastName,Birthday,Email,Password,Country";
-        private const string UpdateMemberBindingFields = "FirstName, LastName, Birthday, Gender, Address, City, State, ZipCode, Country, PhoneNumber, Description";
+        private const string UpdateMemberBindingFields = "FirstName,LastName,Birthday,Gender,Address,City,State,ZipCode,Country,PhoneNumber,Description";
 
         // POST: api/v1/Members/
         /// <summary>

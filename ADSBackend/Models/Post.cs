@@ -30,7 +30,7 @@ namespace ADSBackend.Models
 		[Required]
 		public bool IsMachinePost { get; set; } = false;
 		[Required]
-		public DateTime CreatedAt { get; set; }
+		public DateTime CreatedAt { get; set; } = DateTime.Now;
 		public DateTime EditedAt { get; set; }
 		[Required]
 		public bool IsDeleted { get; set; } = false;

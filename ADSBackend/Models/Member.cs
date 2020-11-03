@@ -54,6 +54,7 @@ namespace ADSBackend.Models
         [DataType(DataType.PhoneNumber)]
         public string PhoneNumber { get; set; }
 
+        [ForeignKey("Photo")]
         public int? ProfilePhotoPhotoId { get; set; }
         
         [Display(Name = "Profile Picture")]
@@ -66,8 +67,8 @@ namespace ADSBackend.Models
         [JsonIgnore]
         [MinLength(8, ErrorMessage = "Password must be at least 8 characters long")]
         public string Password { get; set; }
-        [JsonIgnore]
 
+        [JsonIgnore]
         public string PasswordSalt { get; set; }
 
         public int WallId { get; set; }

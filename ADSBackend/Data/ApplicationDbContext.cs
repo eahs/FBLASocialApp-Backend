@@ -89,6 +89,11 @@ namespace ADSBackend.Data
                 .HasOne(p => p.Post)
                 .WithMany(p => p.Images)
                 .HasForeignKey(p => p.PostId);
+
+            builder.Entity<Member>()
+                .HasOne(m => m.ProfilePhoto)
+                .WithOne()
+                .HasForeignKey<Member>(m => m.ProfilePhotoPhotoId);
         }
     }
 }

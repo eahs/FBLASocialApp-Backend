@@ -9,7 +9,9 @@ namespace ADSBackend.Models
         [Key]
         public int PhotoId { get; set; }
         public int MemberId { get; set; }
+        public Member Member { get; set; }
         public string Filename { get; set; }
+        public string Metadata { get; set; } = "{}";
         public string ContentType { get; set; } = "image/jpeg";
         [JsonIgnore]
         public string FileSubPath { get; set; }
