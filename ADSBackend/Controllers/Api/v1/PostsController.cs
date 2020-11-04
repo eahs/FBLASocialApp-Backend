@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using ADSBackend.Controllers.Api.v1;
 using ADSBackend.Data;
 using ADSBackend.Models;
@@ -9,9 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestSharp;
-using YakkaApp.Helpers;
+using ADSBackend.Helpers;
 
-namespace YakkaApp.Controllers.Api.v1
+namespace ADSBackend.Controllers.Api.v1
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Produces("application/json")]
@@ -63,11 +62,13 @@ namespace YakkaApp.Controllers.Api.v1
         public async Task<ApiResponse> CreatePost([Bind(CreatePostBindingFields)]Post post)
         {
             var httpUser = (Member) HttpContext.Items["User"];
+
             var member = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
             if (member == null)
             {
                 return new ApiResponse(System.Net.HttpStatusCode.BadRequest, post, "Please provide a valid AuthorId", ModelState);
             }
+
             var safePost = new Post
             {
                 AuthorId = httpUser.MemberId,

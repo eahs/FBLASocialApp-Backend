@@ -20,11 +20,24 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="3.1.8" />
+    <Compile Remove="Migrations\20201103020734_AddedProfilePhotoToMember.cs" />
+    <Compile Remove="Migrations\20201103020734_AddedProfilePhotoToMember.Designer.cs" />
+    <Compile Remove="Migrations\20201103021054_AddedProfilePhotoToMember.cs" />
+    <Compile Remove="Migrations\20201103021054_AddedProfilePhotoToMember.Designer.cs" />
+    <Compile Remove="Migrations\20201103021313_AddedProfilePhotoToMember.cs" />
+    <Compile Remove="Migrations\20201103021313_AddedProfilePhotoToMember.Designer.cs" />
+    <Compile Remove="Migrations\20201103021524_AddedProfilePhotoToMember.cs" />
+    <Compile Remove="Migrations\20201103021524_AddedProfilePhotoToMember.Designer.cs" />
+    <Compile Remove="Migrations\20201103023121_AddedProfilePhotoToMember.cs" />
+    <Compile Remove="Migrations\20201103023121_AddedProfilePhotoToMember.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="3.1.9" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.9" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.8" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="3.1.8" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="3.1.8" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="3.1.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="3.1.9" Condition="'$(Configuration)' == 'Debug'" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Condition="'$(Configuration)'=='Staging'">
       <Version>3.1.8</Version>
     </PackageReference>
@@ -32,13 +45,13 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.9" />	
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.9" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="3.1.8" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.8" />	
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="3.1.9" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.9" />	
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.4" PrivateAssets="All" />	
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />	
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.3" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.4" />
     <PackageReference Include="RestSharp" Version="106.11.7" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
   </ItemGroup>
 
   <ItemGroup>

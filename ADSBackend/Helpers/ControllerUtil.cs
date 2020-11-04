@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace YakkaApp.Helpers
+namespace ADSBackend.Helpers
 {
     public static class ControllerUtil
     {
