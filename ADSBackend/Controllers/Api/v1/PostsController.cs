@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using ADSBackend.Controllers.Api.v1;
 using ADSBackend.Data;
 using ADSBackend.Models;
@@ -20,7 +21,7 @@ namespace YakkaApp.Controllers.Api.v1
         private readonly ApplicationDbContext _context;
         private readonly IUserService _userService;
 
-        private const string CreatePostBindingFields = "Title,Body,Image,CreatedAt,PrivacyLevel,IsFeatured";
+        private const string CreatePostBindingFields = "Title,Body,Image,PrivacyLevel,IsFeatured";
         private const string UpdatePostBindingFields = "PostId,Title,Body,EditedAt,PrivacyLevel,IsFeatured";
 
         public PostsController(ApplicationDbContext context, IUserService userService)
@@ -73,7 +74,7 @@ namespace YakkaApp.Controllers.Api.v1
                 Title = post.Title ?? "",
                 Body = post.Body ?? "",
                 Image = post.Image ?? "",
-                CreatedAt = post.CreatedAt, // Is required in the model, handled by the app.
+                CreatedAt = new DateTime(), // Is required in the model, handled by the server
                 PrivacyLevel = post.PrivacyLevel, // Defaults to 0(public) in the model
                 IsFeatured = post.IsFeatured // Defaults to false in in the model
             };
