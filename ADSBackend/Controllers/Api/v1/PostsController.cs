@@ -34,10 +34,10 @@ namespace ADSBackend.Controllers.Api.v1
         /// <summary>
         /// Returns the list of post from a specific member
         /// </summary>
-        /// <param name="memberId"></param>
+        /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
-        public async Task<ApiResponse> GetPosts(int memberId)
+        public async Task<ApiResponse> GetPosts(int id)
         {
             return new ApiResponse(System.Net.HttpStatusCode.OK, null);
         }
@@ -46,10 +46,10 @@ namespace ADSBackend.Controllers.Api.v1
         /// <summary>
         /// Returns the list of post from a specific member
         /// </summary>
-        /// <param name="postId"></param>
+        /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("{id}")]
-        public async Task<ApiResponse> GetPost(int postId)
+        public async Task<ApiResponse> GetPost(int id)
         {
             return new ApiResponse(System.Net.HttpStatusCode.OK, null);
         }
@@ -109,10 +109,10 @@ namespace ADSBackend.Controllers.Api.v1
         /// <summary>
         /// Deletes a post
         /// </summary>
-        /// <param name="postId"></param>
+        /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete("{id}")]
-        public async Task<ApiResponse> DeletePost(int postId)
+        public async Task<ApiResponse> DeletePost(int id)
         {
             return new ApiResponse(System.Net.HttpStatusCode.OK, null);
         }
