@@ -60,6 +60,7 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet("{id}")]
         public async Task<ApiResponse> GetMember(int id)
         {
+            // TODO: Add validation for an id
             var httpUser = (Member)HttpContext.Items["User"];
 
             var member = await _context.Member.Include(m => m.Friends)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using ADSBackend.Controllers.Api.v1;
 using ADSBackend.Data;
@@ -10,6 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestSharp;
 using ADSBackend.Helpers;
+using Microsoft.EntityFrameworkCore.Internal;
+using System.Linq;
 
 namespace ADSBackend.Controllers.Api.v1
 {
@@ -30,7 +33,7 @@ namespace ADSBackend.Controllers.Api.v1
             _userService = userService;
         }
 
-        // GET: api/v1/posts/{memberId}
+        // GET: api/v1/posts/{id}
         /// <summary>
         /// Returns the list of post from a specific member
         /// </summary>
@@ -39,19 +42,15 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet("{id}")]
         public async Task<ApiResponse> GetPosts(int id)
         {
-            return new ApiResponse(System.Net.HttpStatusCode.OK, null);
-        }
-        
-        // GET: api/v1/posts/{postId}
-        /// <summary>
-        /// Returns the list of post from a specific member
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpGet("{id}")]
-        public async Task<ApiResponse> GetPost(int id)
-        {
-            return new ApiResponse(System.Net.HttpStatusCode.OK, null);
+
+            var posts = await _context.Post.Where(p => p.AuthorId == id)
+                .Include(p => p.Author)
+                .ThenInclude(m => m.Friends)
+                .Include(p => p.Reactions)
+                .ThenInclude(r => r.Reaction)
+                .ToListAsync();
+            System.Diagnostics.Debug.WriteLine(posts);
+            return new ApiResponse(System.Net.HttpStatusCode.OK, posts);
         }
 
         // POST: api/v1/posts/
@@ -60,14 +59,15 @@ namespace ADSBackend.Controllers.Api.v1
         /// </summary>
         /// <param name="post"></param>
         [HttpPost]
-        public async Task<ApiResponse> CreatePost([Bind(CreatePostBindingFields)]Post post)
+        public async Task<ApiResponse> CreatePost([Bind(CreatePostBindingFields)] Post post)
         {
             var httpUser = (Member) HttpContext.Items["User"];
 
             var member = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
             if (member == null)
             {
-                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, post, "Please provide a valid AuthorId", ModelState);
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, post, "Please provide a valid AuthorId",
+                    ModelState);
             }
 
             var safePost = new Post
@@ -92,7 +92,7 @@ namespace ADSBackend.Controllers.Api.v1
             await _context.SaveChangesAsync();
             return new ApiResponse(System.Net.HttpStatusCode.OK, safePost);
         }
-        
+
         // PUT: api/v1/posts/
         /// <summary>
         /// Updates an existing post
@@ -104,7 +104,7 @@ namespace ADSBackend.Controllers.Api.v1
         {
             return new ApiResponse(System.Net.HttpStatusCode.OK, null);
         }
-        
+
         // DELETE: api/v1/posts/{postId}
         /// <summary>
         /// Deletes a post
