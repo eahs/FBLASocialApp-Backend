@@ -28,10 +28,7 @@ namespace ADSBackend.Models
         [DisplayFormat(DataFormatString = "{0:MM/dd/yyyy}")] 
         public DateTime Birthday { get; set; }
 
-        public string FullName { 
-            get { return FirstName + " " + LastName; } 
-            set { }
-        }
+        public string FullName => $"{FirstName} {LastName}";
 
         public string Gender { get; set; } = "";
 
