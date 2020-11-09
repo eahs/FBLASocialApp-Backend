@@ -154,8 +154,15 @@ namespace ADSBackend.Controllers.Api.v1
             return new ApiResponse(System.Net.HttpStatusCode.OK, session);
         }
 
+        /// <summary>
+        /// Adds a new message to a chat
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="message"></param>
+        /// <param name="connectionId">optional signalR connection id</param>
+        /// <returns></returns>
         [HttpPost("messages/{id}")]
-        public async Task<ApiResponse> AddMessage(int id, [Bind("AuthorId,Body,ChatSessionId")]ChatMessage message)
+        public async Task<ApiResponse> AddMessage(int id, [Bind("AuthorId,Body,ChatSessionId")]ChatMessage message, string connectionId = null)
         {
             var sessionResponse = await GetSessionHelper(id);
             if (sessionResponse.StatusCode != (int)System.Net.HttpStatusCode.OK)
@@ -172,6 +179,12 @@ namespace ADSBackend.Controllers.Api.v1
 
             _context.ChatSession.Update(session);
             await _context.SaveChangesAsync();
+
+            // If a connectionId is specified, add that user to the appropriate group
+            if (connectionId != null)
+            {
+                await _hubContext.Groups.AddToGroupAsync(connectionId, session.ChatPrivateKey);
+            }
 
             await SendGroupMessage(message);
             
