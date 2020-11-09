@@ -125,7 +125,8 @@ namespace ADSBackend
             // configure DI for application services
             services.AddScoped<IUserService, UserService>();
 
-            services.AddSignalR();
+            services.AddSignalR()
+                .AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; });
 
         }
 

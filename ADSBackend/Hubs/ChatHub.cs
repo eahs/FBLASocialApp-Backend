@@ -28,22 +28,27 @@ namespace ADSBackend.Hubs
         }
 
         public void SendGroupMessage(string chatPrivateKey, string message)
-        {            
-            Clients.Group(chatPrivateKey).SendAsync("Receive", message);
+        {
+            ChatMessage msg = new ChatMessage
+            {
+                Body = message
+            };
+
+            Clients.Group(chatPrivateKey).SendAsync("Receive", msg);
         }
 
-        public async Task AddToGroup(string groupName)
+        public async Task Subscribe(string chatPrivateKey)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            await Groups.AddToGroupAsync(Context.ConnectionId, chatPrivateKey);
 
-            await Clients.Group(groupName).SendAsync("Receive", $"{Context.ConnectionId} has joined the group {groupName}.");
+            //await Clients.Group(chatPrivateKey).SendAsync("Receive", $"{Context.ConnectionId} has joined the group {chatPrivateKey}.");
         }
 
-        public async Task RemoveFromGroup(string groupName)
+        public async Task Unsubscribe(string chatPrivateKey)
         {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatPrivateKey);
 
-            await Clients.Group(groupName).SendAsync("Send", $"{Context.ConnectionId} has left the group {groupName}.");
+            //await Clients.Group(chatPrivateKey).SendAsync("Receive", $"{Context.ConnectionId} has left the group {chatPrivateKey}.");
         }
     }
 }
