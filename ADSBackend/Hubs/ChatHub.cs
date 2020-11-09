@@ -36,7 +36,7 @@ namespace ADSBackend.Hubs
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
 
-            await Clients.Group(groupName).SendAsync("Send", $"{Context.ConnectionId} has joined the group {groupName}.");
+            await Clients.Group(groupName).SendAsync("Receive", $"{Context.ConnectionId} has joined the group {groupName}.");
         }
 
         public async Task RemoveFromGroup(string groupName)
