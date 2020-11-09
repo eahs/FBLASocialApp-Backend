@@ -1,6 +1,7 @@
 using ADSBackend.Configuration;
 using ADSBackend.Data;
 using ADSBackend.Helpers;
+using ADSBackend.Hubs;
 using ADSBackend.Models.Identity;
 using ADSBackend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,6 +18,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ADSBackend
 {
@@ -102,9 +104,29 @@ namespace ADSBackend
                     ValidateIssuer = false,
                     ValidateAudience = false
                 };
+                x.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        // If the request is for our hub...
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            (path.StartsWithSegments("/hubs/chat")))
+                        {
+                            // Read the token out of the query string
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
             // configure DI for application services
             services.AddScoped<IUserService, UserService>();
+
+            services.AddSignalR();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -140,6 +162,7 @@ namespace ADSBackend
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+                endpoints.MapHub<ChatHub>("/hubs/chat");
             });
 
             app.UseSwagger();
