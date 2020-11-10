@@ -21,6 +21,7 @@ namespace ADSBackend.Data
         public DbSet<Post> Post { get; set; }
         public DbSet<Reaction> Reaction { get; set; }
         public DbSet<Wall> Wall { get; set; }
+        public DbSet<WallPost> WallPost { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
