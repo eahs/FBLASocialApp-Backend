@@ -39,11 +39,33 @@ namespace ADSBackend.Controllers.Api.v1
         {
             var httpUser = (Member)HttpContext.Items["User"];
 
-            var member = await _context.Member.Where(m => m.MemberId == httpUser.MemberId).Include(m => m.ChatSessions).ThenInclude(m => m.Member).FirstOrDefaultAsync();
+            var member = await _context.Member.Where(m => m.MemberId == httpUser.MemberId)
+                                              .Include(m => m.ChatSessions).ThenInclude(m => m.ChatSession).ThenInclude(m => m.ChatMembers)
+                                              .FirstOrDefaultAsync();
 
             if (member != null)
             {
-                return new ApiResponse(System.Net.HttpStatusCode.OK, member.ChatSessions);
+                return new ApiResponse(System.Net.HttpStatusCode.OK, member.ChatSessions.Select(cs => cs.ChatSession).ToList());
+            }
+
+            return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, errorMessage: "No active sessions found");
+        }
+
+        [HttpPost("connect")]
+        public async Task<ApiResponse> ConnectToChatSessions(string connectionId)
+        {
+            var gas = await GetActiveSessions();
+
+            if (gas.StatusCode == 200)
+            {
+                var sessions = (List<ChatSession>)gas.Result;
+
+                foreach (var session in sessions)
+                {
+                    await _hubContext.Groups.AddToGroupAsync(connectionId, session.ChatPrivateKey);
+                }
+
+                new ApiResponse(System.Net.HttpStatusCode.OK, null);
             }
 
             return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, errorMessage: "No active sessions found");
