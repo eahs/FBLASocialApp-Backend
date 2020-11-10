@@ -45,7 +45,10 @@ namespace ADSBackend.Controllers.Api.v1
         {
             var httpUser = (Member)HttpContext.Items["User"];
 
-            var posts = await _context.Post.Where(p => p.AuthorId == httpUser.MemberId)
+            var member = await _context.Member.Include(m => m.Friends).FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            List<int> friendIds = member.Friends.Select(f => f.FriendId).ToList();
+
+            var posts = await _context.Post.Where(p => friendIds.Contains(p.AuthorId) || p.IsMachinePost)
                 .Include(p => p.Author)
                 .Include(p => p.Reactions).ThenInclude(r => r.Reaction).ThenInclude(m => m.Member)
                 .OrderByDescending(wp => wp.PostId)
@@ -127,7 +130,7 @@ namespace ADSBackend.Controllers.Api.v1
         /// <summary>
         /// Gets public posts for a given wall
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="id">id of wall</param>
         /// <param name="page"></param>
         /// <param name="numPosts"></param>
         /// <returns></returns>
@@ -165,6 +168,13 @@ namespace ADSBackend.Controllers.Api.v1
             return new ApiResponse(System.Net.HttpStatusCode.OK, posts);
         }
 
+        /// <summary>
+        /// Gets the posts for a given member by id, respecting their privacy levels for each post
+        /// </summary>
+        /// <param name="id">id of member</param>
+        /// <param name="page"></param>
+        /// <param name="numPosts"></param>
+        /// <returns></returns>
         [HttpGet("/walls/member/{id}")]
         public async Task<ApiResponse> GetMemberWall(int id, int page = 1, int numPosts = 25)
         {
@@ -180,7 +190,7 @@ namespace ADSBackend.Controllers.Api.v1
 
             // Check to see if the viewing member is a friend of the wall owner - this is necessary in the event the
             // wall owner marks some posts as friends only
-            bool isFriend = friendIds.Contains(httpUser.MemberId);
+            bool isFriend = friendIds.Contains(httpUser.MemberId) || id == httpUser.MemberId;
 
             // Get all the wallposts for this member's wall
             var wallposts = await _context.WallPost.Where(w => w.WallId == member.WallId)
@@ -193,7 +203,9 @@ namespace ADSBackend.Controllers.Api.v1
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Wall not found");
 
             // Filter posts down to posts that are viewable
-            List<Post> posts = wallposts.Where(wp => wp.Post.PrivacyLevel == PrivacyLevel.Public || (wp.Post.PrivacyLevel == PrivacyLevel.FriendsOnly && isFriend))
+            List<Post> posts = wallposts.Where(wp => wp.Post.PrivacyLevel == PrivacyLevel.Public || 
+                                                    (wp.Post.PrivacyLevel == PrivacyLevel.FriendsOnly && isFriend) ||
+                                                    (wp.Post.PrivacyLevel == PrivacyLevel.Private && wp.Post.AuthorId == httpUser.MemberId))
                                    .Select(wp => wp.Post)
                                    .ToList();
 
