@@ -33,23 +33,30 @@ namespace ADSBackend.Controllers.Api.v1
             _userService = userService;
         }
 
-        // GET: api/v1/posts/{id}
+        // GET: api/v1/posts/home
         /// <summary>
-        /// Returns the list of post from a specific member
+        /// Gets the home timeline for a member
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="page"></param>
+        /// <param name="numPosts"></param>
         /// <returns></returns>
-        [HttpGet("{id}")]
-        public async Task<ApiResponse> GetPosts(int id)
+        [HttpGet("/home")]
+        public async Task<ApiResponse> GetMemberHome(int page = 1, int numPosts = 25)
         {
+            var httpUser = (Member)HttpContext.Items["User"];
 
-            var posts = await _context.Post.Where(p => p.AuthorId == id)
+            var posts = await _context.Post.Where(p => p.AuthorId == httpUser.MemberId)
                 .Include(p => p.Author)
-                .ThenInclude(m => m.Friends)
-                .Include(p => p.Reactions)
-                .ThenInclude(r => r.Reaction)
+                .Include(p => p.Reactions).ThenInclude(r => r.Reaction).ThenInclude(m => m.Member)
+                .OrderByDescending(wp => wp.PostId)
+                .Skip(page * numPosts)
+                .Take(numPosts)
                 .ToListAsync();
-            System.Diagnostics.Debug.WriteLine(posts);
+
+            ReducePostsResultset(posts);
+
+            // System.Diagnostics.Debug.WriteLine(posts);
+
             return new ApiResponse(System.Net.HttpStatusCode.OK, posts);
         }
 
@@ -116,5 +123,114 @@ namespace ADSBackend.Controllers.Api.v1
         {
             return new ApiResponse(System.Net.HttpStatusCode.OK, null);
         }
+
+        /// <summary>
+        /// Gets public posts for a given wall
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="page"></param>
+        /// <param name="numPosts"></param>
+        /// <returns></returns>
+        [HttpGet("/walls/{id}")]
+        public async Task<ApiResponse> GetWall(int id, int page = 1, int numPosts = 25)
+        {
+            var httpUser = (Member)HttpContext.Items["User"];
+
+            // Look up the viewing member friends list
+            var member = await _context.Member.Include(m => m.Friends).FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            List<int> friendIds = member.Friends.Select(f => f.FriendId).ToList();
+
+            // Get all the wallposts for this wall
+            var wallposts = await _context.WallPost.Where(w => w.WallId == id)
+                            .Include(wp => wp.Post).ThenInclude(p => p.Author)
+                            .Include(wp => wp.Post).ThenInclude(p => p.Reactions).ThenInclude(r => r.Reaction).ThenInclude(m => m.Member).ThenInclude(ph => ph.ProfilePhoto)
+                            .OrderByDescending(wp => wp.PostId)
+                            .ToListAsync();
+
+            if (wallposts == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Wall not found");
+
+            // Filter posts down to posts that are viewable
+            List<Post> posts = wallposts.Where(wp => wp.Post.PrivacyLevel == PrivacyLevel.Public || (wp.Post.PrivacyLevel == PrivacyLevel.FriendsOnly && friendIds.Contains(wp.Post.AuthorId)))
+                .Select(wp => wp.Post)
+                .ToList();
+
+            // Apply paging
+            posts = posts.Skip(page * numPosts).Take(numPosts).ToList();
+
+            // Reduce amount of data to transmit
+            ReducePostsResultset(posts);
+
+            //System.Diagnostics.Debug.WriteLine(posts);
+            return new ApiResponse(System.Net.HttpStatusCode.OK, posts);
+        }
+
+        [HttpGet("/walls/member/{id}")]
+        public async Task<ApiResponse> GetMemberWall(int id, int page = 1, int numPosts = 25)
+        {
+            var httpUser = (Member)HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.Friends).FirstOrDefaultAsync(m => m.MemberId == id);
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
+            // Let's get the viewing member's list of friends by id
+            List<int> friendIds = member.Friends.Select(f => f.FriendId).ToList();
+
+            // Check to see if the viewing member is a friend of the wall owner - this is necessary in the event the
+            // wall owner marks some posts as friends only
+            bool isFriend = friendIds.Contains(httpUser.MemberId);
+
+            // Get all the wallposts for this member's wall
+            var wallposts = await _context.WallPost.Where(w => w.WallId == member.WallId)
+                            .Include(wp => wp.Post).ThenInclude(p => p.Author)
+                            .Include(wp => wp.Post).ThenInclude(p => p.Reactions).ThenInclude(r => r.Reaction).ThenInclude(m => m.Member).ThenInclude(ph => ph.ProfilePhoto)
+                            .OrderByDescending(wp => wp.PostId)
+                            .ToListAsync();
+
+            if (wallposts == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Wall not found");
+
+            // Filter posts down to posts that are viewable
+            List<Post> posts = wallposts.Where(wp => wp.Post.PrivacyLevel == PrivacyLevel.Public || (wp.Post.PrivacyLevel == PrivacyLevel.FriendsOnly && isFriend))
+                                   .Select(wp => wp.Post)
+                                   .ToList();
+
+            // Apply paging
+            posts = posts.Skip(page * numPosts).Take(numPosts).ToList();
+
+            ReducePostsResultset(posts);
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK, posts);
+        }
+
+        private void ReducePostsResultset (List<Post> posts)
+        {
+            foreach (var post in posts)
+            {
+                // Reduce member details to minimal amount
+                post.Author = new Member
+                {
+                    MemberId = post.Author.MemberId,
+                    FirstName = post.Author.FirstName,
+                    LastName = post.Author.LastName,
+                    ProfilePhoto = post.Author.ProfilePhoto
+                };
+
+                foreach (var reaction in post.Reactions)
+                {
+                    // Reduce member details to minimal amount
+                    reaction.Reaction.Member = new Member
+                    {
+                        MemberId = reaction.Reaction.Member.MemberId,
+                        FirstName = reaction.Reaction.Member.FirstName,
+                        LastName = reaction.Reaction.Member.LastName,
+                        ProfilePhoto = reaction.Reaction.Member.ProfilePhoto
+                    };
+                }
+            }
+        }
+
     }
 }
