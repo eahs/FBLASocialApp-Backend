@@ -110,9 +110,32 @@ namespace ADSBackend.Controllers.Api.v1
         /// <param name="post"></param>
         /// <returns></returns>
         [HttpPut]
-        public async Task<ApiResponse> UpdatePost([Bind(UpdatePostBindingFields)] Post post)
+        public async Task<ApiResponse> UpdatePost([Bind(UpdatePostBindingFields)] UpdatePostViewModel post)
         {
-            return new ApiResponse(System.Net.HttpStatusCode.OK, null);
+            var httpUser = (Member) HttpContext.Items["User"];
+            var newPost = await _context.Post.FirstOrDefaultAsync(p => p.PostId == post.PostId && p.AuthorId == httpUser.MemberId);
+            if (newPost == null)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, "Post not found");
+            }
+
+            newPost.Title = post.Title ?? newPost.Title;
+            newPost.Body = post.Body ?? newPost.Body;
+            newPost.EditedAt = new DateTime();
+            newPost.PrivacyLevel = post.PrivacyLevel;
+            newPost.IsFeatured = post.IsFeatured;
+
+            TryValidateModel(newPost);
+            ModelState.Scrub(UpdatePostBindingFields);
+
+            if (!ModelState.IsValid)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "An error has occurred", ModelState);
+            }
+
+            _context.Post.Update(newPost);
+            await _context.SaveChangesAsync();
+            return new ApiResponse(System.Net.HttpStatusCode.OK, newPost);
         }
 
         // DELETE: api/v1/posts/{postId}

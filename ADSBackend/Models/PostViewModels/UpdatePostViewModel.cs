@@ -8,20 +8,13 @@ using System.Threading.Tasks;
 namespace ADSBackend.Models
 {
 
-    public class PostViewModel
+    public class UpdatePostViewModel
     {
         [Required]
         public int PostId { get; set; }
-        [Required]
-        public int AuthorId { get; set; }
-        [Required]
         public string Title { get; set; }
         public string Body { get; set; }
-        public string Image { get; set; }
-        public bool IsMachinePost { get; set; } = false;
-        [Required]
-        public DateTime CreatedAt { get; set; }
-        public PrivacyLevel PrivacyLevel { get; set; } = PrivacyLevel.Public;
+        public PrivacyLevel PrivacyLevel { get; set; }
         public bool IsFeatured { get; set; } = false;
 
     }
