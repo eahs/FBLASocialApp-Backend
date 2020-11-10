@@ -51,6 +51,11 @@ namespace ADSBackend.Controllers.Api.v1
             return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, errorMessage: "No active sessions found");
         }
 
+        /// <summary>
+        /// Connect a member to stream to their existing chat sessions
+        /// </summary>
+        /// <param name="connectionId"></param>
+        /// <returns></returns>
         [HttpPost("connect")]
         public async Task<ApiResponse> ConnectToChatSessions(string connectionId)
         {
@@ -71,6 +76,11 @@ namespace ADSBackend.Controllers.Api.v1
             return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, errorMessage: "No active sessions found");
         }
 
+        /// <summary>
+        /// Create a new chat session between several participants
+        /// </summary>
+        /// <param name="participants"></param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<ApiResponse> CreateChatSession(List<int> participants)
         {
@@ -121,6 +131,11 @@ namespace ADSBackend.Controllers.Api.v1
             return new ApiResponse(System.Net.HttpStatusCode.OK, chatSession);
         }
 
+        /// <summary>
+        /// Get the chat session denoted by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("{id}")]
         public async Task<ApiResponse> GetChatSession(int id)
         {
@@ -133,6 +148,12 @@ namespace ADSBackend.Controllers.Api.v1
             return new ApiResponse(System.Net.HttpStatusCode.OK, session);
         }
 
+        /// <summary>
+        /// Add a member by memberId to a chat session
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="memberId"></param>
+        /// <returns></returns>
         [HttpPost("members/{id}")]
         public async Task<ApiResponse> AddSessionMember(int id, int memberId)
         {
@@ -159,6 +180,12 @@ namespace ADSBackend.Controllers.Api.v1
             return new ApiResponse(System.Net.HttpStatusCode.OK, session);
         }
 
+        /// <summary>
+        /// Removes a member from a chat session
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="memberId"></param>
+        /// <returns></returns>
         [HttpDelete("members/{id}")]
         public async Task<ApiResponse> RemoveSessionMember(int id, int memberId)
         {
