@@ -23,6 +23,7 @@ namespace ADSBackend.Data
         public DbSet<Wall> Wall { get; set; }
         public DbSet<WallPost> WallPost { get; set; }
         public DbSet<FriendRequest> FriendRequest { get; set; }
+        public DbSet<MemberFriend> MemberFriend { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

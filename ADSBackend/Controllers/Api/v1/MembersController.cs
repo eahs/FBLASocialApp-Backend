@@ -9,11 +9,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.Intrinsics.X86;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -33,13 +35,11 @@ namespace ADSBackend.Controllers.Api.v1
             _userService = userService;            
         }
 
-        private static bool IsValidEmail(string email)
-        {
-            // source: http://thedailywtf.com/Articles/Validating_Email_Addresses.aspx
-            Regex rx = new Regex(@"^[-!#$%&'*+/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+/0-9=?A-Z^_a-z{|}~])*@[a-zA-Z](-?[a-zA-Z0-9])*(\.[a-zA-Z](-?[a-zA-Z0-9])*)+$");
-            return rx.IsMatch(email);
-        }
-
+        /// <summary>
+        /// Authenticates a user
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [AllowAnonymous]
         [HttpPost("authenticate")]
         public async Task<ApiResponse> Authenticate(AuthenticateRequest model)
@@ -52,6 +52,134 @@ namespace ADSBackend.Controllers.Api.v1
             return new ApiResponse(System.Net.HttpStatusCode.OK, member);
         }
 
+        /// <summary>
+        /// Gets a list of friends for a member
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("friends")]
+        public async Task<ApiResponse> GetFriends()
+        {
+            var httpUser = (Member)HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.Friends)
+                                              .ThenInclude(mf => mf.Friend)
+                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
+            List<Member> friends = member.Friends.Select(f => f.Friend).ToList();
+
+            for (int i = 0; i < friends.Count; i++)
+            {
+                Member rf = friends[i];
+
+                friends[i] = new Member
+                {
+                    MemberId = rf.MemberId,
+                    FirstName = rf.FirstName,
+                    LastName = rf.LastName,
+                    ProfilePhoto = rf.ProfilePhoto
+                };
+            }
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK, friends);
+        }
+
+        [HttpPost("friends/{id}")]
+        public async Task<ApiResponse> AddFriendRequest (int id)
+        {
+            var httpUser = (Member)HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.Friends)
+                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
+            var exists = member.Friends.Where(f => f.FriendId == id);
+
+            if (exists != null)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, errorMessage: "Member already a friend");
+            }
+
+            FriendRequest request = new FriendRequest
+            {
+                MemberId = httpUser.MemberId,
+                FriendId = id,
+                RequestIssuedAt = DateTime.Now,
+                Status = FriendRequestStatus.Pending
+            };
+
+            _context.FriendRequest.Add(request);
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK, request);
+        }
+
+        [HttpDelete("friends/{id}")]
+        public async Task<ApiResponse> RemoveFriend(int id)
+        {
+            var httpUser = (Member)HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.Friends)
+                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
+            var friend = member.Friends.FirstOrDefault(f => f.FriendId == id);
+
+            if (friend != null)
+            {
+                // Remove friend
+                _context.MemberFriend.Remove(friend);
+                await _context.SaveChangesAsync();
+            }
+
+            // Remove any pending friend requests
+            var requests = await _context.FriendRequest.Where((fr => fr.MemberId == httpUser.MemberId && fr.FriendId == id && fr.Status == FriendRequestStatus.Pending))
+                                                       .ToListAsync();
+
+            foreach (var request in requests)
+            {
+                request.Status = FriendRequestStatus.Rejected;
+            }
+
+            _context.FriendRequest.UpdateRange(requests);
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK);
+        }
+
+        [HttpGet("friends/requests")]
+        public async Task<ApiResponse> GetFriendRequests()
+        {
+            var httpUser = (Member)HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.FriendRequests)
+                                              .ThenInclude(mf => mf.Friend)
+                                              .Include(m => m.ProfilePhoto)
+                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
+            foreach (var request in member.FriendRequests)
+            {
+                request.Friend = new Member
+                {
+                    MemberId = request.Friend.MemberId,
+                    FirstName = request.Friend.FirstName,
+                    LastName = request.Friend.LastName,
+                    ProfilePhoto = request.Friend.ProfilePhoto
+                };
+            }
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK, member.FriendRequests);
+        }
+
         // GET: api/v1/Members/{id}
         /// <summary>
         /// Returns a specific member
@@ -60,7 +188,7 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet("{id}")]
         public async Task<ApiResponse> GetMember(int id)
         {
-            // TODO: Add validation for an id
+            // TODO: Add validation for an id that member is a friend of the logged in user?
             var httpUser = (Member)HttpContext.Items["User"];
 
             var member = await _context.Member.Include(m => m.Friends)
@@ -68,6 +196,9 @@ namespace ADSBackend.Controllers.Api.v1
                                               .FirstOrDefaultAsync(m => m.MemberId == id);
 
             // TODO: Strip all data that isn't supposed to be public from this api response
+            
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
 
             return new ApiResponse(System.Net.HttpStatusCode.OK, member);  
         }
