@@ -22,7 +22,7 @@ namespace ADSBackend.Data
         public DbSet<Reaction> Reaction { get; set; }
         public DbSet<Wall> Wall { get; set; }
         public DbSet<WallPost> WallPost { get; set; }
-
+        public DbSet<FriendRequest> FriendRequest { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
