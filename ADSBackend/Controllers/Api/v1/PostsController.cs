@@ -49,7 +49,7 @@ namespace ADSBackend.Controllers.Api.v1
             List<int> friendIds = member.Friends.Select(f => f.FriendId).ToList();
 
             var posts = await _context.Post.Where(p => friendIds.Contains(p.AuthorId) || p.IsMachinePost)
-                .Include(p => p.Author)
+                .Include(p => p.Author).ThenInclude(p => p.ProfilePhoto)
                 .Include(p => p.Reactions).ThenInclude(r => r.Reaction).ThenInclude(m => m.Member)
                 .OrderByDescending(wp => wp.PostId)
                 .Skip(page * numPosts)
@@ -176,7 +176,7 @@ namespace ADSBackend.Controllers.Api.v1
 
             // Get all the wallposts for this wall
             var wallposts = await _context.WallPost.Where(w => w.WallId == id)
-                            .Include(wp => wp.Post).ThenInclude(p => p.Author)
+                            .Include(wp => wp.Post).ThenInclude(p => p.Author).ThenInclude(p => p.ProfilePhoto)
                             .Include(wp => wp.Post).ThenInclude(p => p.Reactions).ThenInclude(r => r.Reaction).ThenInclude(m => m.Member).ThenInclude(ph => ph.ProfilePhoto)
                             .OrderByDescending(wp => wp.PostId)
                             .ToListAsync();
@@ -225,7 +225,7 @@ namespace ADSBackend.Controllers.Api.v1
 
             // Get all the wallposts for this member's wall
             var wallposts = await _context.WallPost.Where(w => w.WallId == member.WallId)
-                            .Include(wp => wp.Post).ThenInclude(p => p.Author)
+                            .Include(wp => wp.Post).ThenInclude(p => p.Author).ThenInclude(p => p.ProfilePhoto)
                             .Include(wp => wp.Post).ThenInclude(p => p.Reactions).ThenInclude(r => r.Reaction).ThenInclude(m => m.Member).ThenInclude(ph => ph.ProfilePhoto)
                             .OrderByDescending(wp => wp.PostId)
                             .ToListAsync();
