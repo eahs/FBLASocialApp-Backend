@@ -63,6 +63,7 @@ namespace ADSBackend.Controllers.Api.v1
 
             var member = await _context.Member.Include(m => m.Friends)
                                               .ThenInclude(mf => mf.Friend)
+                                              .ThenInclude(mf => mf.ProfilePhoto)
                                               .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
 
             if (member == null)
@@ -193,10 +194,26 @@ namespace ADSBackend.Controllers.Api.v1
 
             var member = await _context.Member.Include(m => m.Friends)
                                               .ThenInclude(f => f.Friend)
+                                              .ThenInclude(mf => mf.ProfilePhoto)
+                                              .Include(m => m.ProfilePhoto)
                                               .FirstOrDefaultAsync(m => m.MemberId == id);
 
-            // TODO: Strip all data that isn't supposed to be public from this api response
-            
+            for (int i = 0; i < member.Friends.Count; i++)
+            {
+                Member rf = member.Friends[i].Friend;
+
+                member.Friends[i] = new MemberFriend
+                {
+                    Friend = new Member
+                    {
+                        MemberId = rf.MemberId,
+                        FirstName = rf.FirstName,
+                        LastName = rf.LastName,
+                        ProfilePhoto = rf.ProfilePhoto
+                    }
+                };
+            }
+
             if (member == null)
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
 
