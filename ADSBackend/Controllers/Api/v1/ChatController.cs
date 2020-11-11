@@ -35,7 +35,7 @@ namespace ADSBackend.Controllers.Api.v1
         }
 
         [HttpGet]
-        public async Task<ApiResponse> GetActiveSessions()
+        public async Task<ApiResponse> GetActiveChatSessions()
         {
             var httpUser = (Member)HttpContext.Items["User"];
 
@@ -59,7 +59,7 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpPost("connect")]
         public async Task<ApiResponse> ConnectToChatSessions(string connectionId)
         {
-            var gas = await GetActiveSessions();
+            var gas = await GetActiveChatSessions();
 
             if (gas.StatusCode == 200)
             {
@@ -155,7 +155,7 @@ namespace ADSBackend.Controllers.Api.v1
         /// <param name="memberId"></param>
         /// <returns></returns>
         [HttpPost("members/{id}")]
-        public async Task<ApiResponse> AddSessionMember(int id, int memberId)
+        public async Task<ApiResponse> AddChatSessionMember(int id, int memberId)
         {
             var sessionResponse = await GetSessionHelper(id);
             if (sessionResponse.StatusCode != (int)System.Net.HttpStatusCode.OK)
@@ -206,19 +206,22 @@ namespace ADSBackend.Controllers.Api.v1
         /// <summary>
         /// Adds a new message to a chat
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="id">id of chat session</param>
         /// <param name="message"></param>
         /// <param name="connectionId">optional signalR connection id</param>
         /// <returns></returns>
         [HttpPost("messages/{id}")]
-        public async Task<ApiResponse> AddMessage(int id, [Bind("AuthorId,Body,ChatSessionId")]ChatMessage message, string connectionId = null)
+        public async Task<ApiResponse> AddChatMessage(int id, [Bind("Body")]ChatMessage message, string connectionId = null)
         {
+            var httpUser = (Member)HttpContext.Items["User"];
+
             var sessionResponse = await GetSessionHelper(id);
             if (sessionResponse.StatusCode != (int)System.Net.HttpStatusCode.OK)
                 return sessionResponse;
 
             var session = (ChatSession)sessionResponse.Result;
 
+            message.AuthorId = httpUser.MemberId;
             message.ChatSessionId = session.ChatSessionId;
             message.CreatedAt = DateTime.Now;
             message.EditedAt = DateTime.Now;
