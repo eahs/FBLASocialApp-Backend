@@ -41,6 +41,12 @@ namespace ADSBackend.Data
                 .HasForeignKey(cm => cm.MemberId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            builder.Entity<FriendRequest>()
+                .HasOne(mf => mf.Member)
+                .WithMany(m => m.FriendRequests)
+                .HasForeignKey(cm => cm.MemberId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             builder.Entity<PostComment>()
                 .HasKey(t => new { t.PostId, t.CommentId });
 
