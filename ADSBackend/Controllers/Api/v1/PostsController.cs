@@ -100,6 +100,14 @@ namespace ADSBackend.Controllers.Api.v1
 
             _context.Post.Add(safePost);
             await _context.SaveChangesAsync();
+            
+            WallPost wp = new WallPost
+            {
+                PostId = safePost.PostId,
+                WallId = httpUser.WallId
+            };
+            _context.WallPost.Add(wp);
+            await _context.SaveChangesAsync();
             return new ApiResponse(System.Net.HttpStatusCode.OK, safePost);
         }
 
