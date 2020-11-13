@@ -216,14 +216,21 @@ namespace ADSBackend
 
         private static void UpdateDatabase(IApplicationBuilder app)
         {
-            using (var serviceScope = app.ApplicationServices
-                .GetRequiredService<IServiceScopeFactory>()
-                .CreateScope())
+            try
             {
-                using (var context = serviceScope.ServiceProvider.GetService<ApplicationDbContext>())
-                {                    
-                    context.Database.Migrate();
+                using (var serviceScope = app.ApplicationServices
+                    .GetRequiredService<IServiceScopeFactory>()
+                    .CreateScope())
+                {
+                    using (var context = serviceScope.ServiceProvider.GetService<ApplicationDbContext>())
+                    {
+                        context.Database.Migrate();
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                // Log error
             }
         }
     }
