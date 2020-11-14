@@ -43,9 +43,10 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet("/home")]
         public async Task<ApiResponse> GetMemberHome(int page = 1, int numPosts = 25)
         {
-            var httpUser = (Member)HttpContext.Items["User"];
+            var httpUser = (Member) HttpContext.Items["User"];
 
-            var member = await _context.Member.Include(m => m.Friends).FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            var member = await _context.Member.Include(m => m.Friends)
+                .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
             List<int> friendIds = member.Friends.Select(f => f.FriendId).ToList();
 
             var posts = await _context.Post.Where(p => friendIds.Contains(p.AuthorId) || p.IsMachinePost)
@@ -100,7 +101,7 @@ namespace ADSBackend.Controllers.Api.v1
 
             _context.Post.Add(safePost);
             await _context.SaveChangesAsync();
-            
+
             WallPost wp = new WallPost
             {
                 PostId = safePost.PostId,
@@ -121,7 +122,9 @@ namespace ADSBackend.Controllers.Api.v1
         public async Task<ApiResponse> UpdatePost([Bind(UpdatePostBindingFields)] UpdatePostViewModel post)
         {
             var httpUser = (Member) HttpContext.Items["User"];
-            var newPost = await _context.Post.FirstOrDefaultAsync(p => p.PostId == post.PostId && p.AuthorId == httpUser.MemberId);
+            var newPost =
+                await _context.Post.FirstOrDefaultAsync(p =>
+                    p.PostId == post.PostId && p.AuthorId == httpUser.MemberId);
             if (newPost == null)
             {
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, "Post not found");
@@ -155,6 +158,15 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpDelete("{id}")]
         public async Task<ApiResponse> DeletePost(int id)
         {
+            var httpUser = (Member) HttpContext.Items["User"];
+            var post = await _context.Post.FirstOrDefaultAsync(p => p.PostId == id && p.AuthorId == httpUser.MemberId);
+            if (post == null)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, "Post not found");
+            }
+
+            _context.Post.Remove(post);
+            await _context.SaveChangesAsync();
             return new ApiResponse(System.Net.HttpStatusCode.OK, null);
         }
 
@@ -168,24 +180,28 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet("/walls/{id}")]
         public async Task<ApiResponse> GetWall(int id, int page = 1, int numPosts = 25)
         {
-            var httpUser = (Member)HttpContext.Items["User"];
+            var httpUser = (Member) HttpContext.Items["User"];
 
             // Look up the viewing member friends list
-            var member = await _context.Member.Include(m => m.Friends).FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            var member = await _context.Member.Include(m => m.Friends)
+                .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
             List<int> friendIds = member.Friends.Select(f => f.FriendId).ToList();
 
             // Get all the wallposts for this wall
             var wallposts = await _context.WallPost.Where(w => w.WallId == id)
-                            .Include(wp => wp.Post).ThenInclude(p => p.Author).ThenInclude(p => p.ProfilePhoto)
-                            .Include(wp => wp.Post).ThenInclude(p => p.Reactions).ThenInclude(r => r.Reaction).ThenInclude(m => m.Member).ThenInclude(ph => ph.ProfilePhoto)
-                            .OrderByDescending(wp => wp.PostId)
-                            .ToListAsync();
+                .Include(wp => wp.Post).ThenInclude(p => p.Author).ThenInclude(p => p.ProfilePhoto)
+                .Include(wp => wp.Post).ThenInclude(p => p.Reactions).ThenInclude(r => r.Reaction)
+                .ThenInclude(m => m.Member).ThenInclude(ph => ph.ProfilePhoto)
+                .OrderByDescending(wp => wp.PostId)
+                .ToListAsync();
 
             if (wallposts == null)
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Wall not found");
 
             // Filter posts down to posts that are viewable
-            List<Post> posts = wallposts.Where(wp => wp.Post.PrivacyLevel == PrivacyLevel.Public || (wp.Post.PrivacyLevel == PrivacyLevel.FriendsOnly && friendIds.Contains(wp.Post.AuthorId)))
+            List<Post> posts = wallposts.Where(wp =>
+                    wp.Post.PrivacyLevel == PrivacyLevel.Public || (wp.Post.PrivacyLevel == PrivacyLevel.FriendsOnly &&
+                                                                    friendIds.Contains(wp.Post.AuthorId)))
                 .Select(wp => wp.Post)
                 .ToList();
 
@@ -209,7 +225,7 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet("/walls/member/{id}")]
         public async Task<ApiResponse> GetMemberWall(int id, int page = 1, int numPosts = 25)
         {
-            var httpUser = (Member)HttpContext.Items["User"];
+            var httpUser = (Member) HttpContext.Items["User"];
 
             var member = await _context.Member.Include(m => m.Friends).FirstOrDefaultAsync(m => m.MemberId == id);
 
@@ -225,20 +241,22 @@ namespace ADSBackend.Controllers.Api.v1
 
             // Get all the wallposts for this member's wall
             var wallposts = await _context.WallPost.Where(w => w.WallId == member.WallId)
-                            .Include(wp => wp.Post).ThenInclude(p => p.Author).ThenInclude(p => p.ProfilePhoto)
-                            .Include(wp => wp.Post).ThenInclude(p => p.Reactions).ThenInclude(r => r.Reaction).ThenInclude(m => m.Member).ThenInclude(ph => ph.ProfilePhoto)
-                            .OrderByDescending(wp => wp.PostId)
-                            .ToListAsync();
+                .Include(wp => wp.Post).ThenInclude(p => p.Author).ThenInclude(p => p.ProfilePhoto)
+                .Include(wp => wp.Post).ThenInclude(p => p.Reactions).ThenInclude(r => r.Reaction)
+                .ThenInclude(m => m.Member).ThenInclude(ph => ph.ProfilePhoto)
+                .OrderByDescending(wp => wp.PostId)
+                .ToListAsync();
 
             if (wallposts == null)
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Wall not found");
 
             // Filter posts down to posts that are viewable
-            List<Post> posts = wallposts.Where(wp => wp.Post.PrivacyLevel == PrivacyLevel.Public || 
-                                                    (wp.Post.PrivacyLevel == PrivacyLevel.FriendsOnly && isFriend) ||
-                                                    (wp.Post.PrivacyLevel == PrivacyLevel.Private && wp.Post.AuthorId == httpUser.MemberId))
-                                   .Select(wp => wp.Post)
-                                   .ToList();
+            List<Post> posts = wallposts.Where(wp => wp.Post.PrivacyLevel == PrivacyLevel.Public ||
+                                                     (wp.Post.PrivacyLevel == PrivacyLevel.FriendsOnly && isFriend) ||
+                                                     (wp.Post.PrivacyLevel == PrivacyLevel.Private &&
+                                                      wp.Post.AuthorId == httpUser.MemberId))
+                .Select(wp => wp.Post)
+                .ToList();
 
             // Apply paging
             posts = posts.Skip(page * numPosts).Take(numPosts).ToList();
@@ -248,7 +266,7 @@ namespace ADSBackend.Controllers.Api.v1
             return new ApiResponse(System.Net.HttpStatusCode.OK, posts);
         }
 
-        private void ReducePostsResultset (List<Post> posts)
+        private void ReducePostsResultset(List<Post> posts)
         {
             foreach (var post in posts)
             {
@@ -274,6 +292,5 @@ namespace ADSBackend.Controllers.Api.v1
                 }
             }
         }
-
     }
 }
