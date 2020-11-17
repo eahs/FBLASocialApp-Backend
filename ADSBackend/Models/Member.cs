@@ -49,6 +49,7 @@ namespace ADSBackend.Models
         public string Email { get; set; }
 
         [DataType(DataType.PhoneNumber)]
+        [Display(Name = "Phone Number")]
         public string PhoneNumber { get; set; }
 
         [ForeignKey("Photo")]
