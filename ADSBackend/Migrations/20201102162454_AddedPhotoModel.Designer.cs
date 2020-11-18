@@ -3,14 +3,16 @@ using System;
 using ADSBackend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace YakkaApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201102162454_AddedPhotoModel")]
+    partial class AddedPhotoModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,9 +60,6 @@ namespace YakkaApp.Migrations
                     b.Property<int>("ChatSessionId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    b.Property<string>("ChatPrivateKey")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.HasKey("ChatSessionId");
 
@@ -121,33 +120,6 @@ namespace YakkaApp.Migrations
                     b.HasKey("Key");
 
                     b.ToTable("ConfigurationItem");
-                });
-
-            modelBuilder.Entity("ADSBackend.Models.FriendRequest", b =>
-                {
-                    b.Property<int>("FriendRequestId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("FriendId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MemberId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("RequestIssuedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.HasKey("FriendRequestId");
-
-                    b.HasIndex("FriendId");
-
-                    b.HasIndex("MemberId");
-
-                    b.ToTable("FriendRequest");
                 });
 
             modelBuilder.Entity("ADSBackend.Models.Identity.ApplicationRole", b =>
@@ -281,6 +253,9 @@ namespace YakkaApp.Migrations
                         .HasColumnType("varchar(32) CHARACTER SET utf8mb4")
                         .HasMaxLength(32);
 
+                    b.Property<string>("FullName")
+                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+
                     b.Property<string>("Gender")
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
@@ -299,9 +274,6 @@ namespace YakkaApp.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
-                    b.Property<int?>("ProfilePhotoPhotoId")
-                        .HasColumnType("int");
-
                     b.Property<string>("State")
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
@@ -311,10 +283,10 @@ namespace YakkaApp.Migrations
                     b.Property<string>("ZipCode")
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
-                    b.HasKey("MemberId");
+                    b.Property<string>("profileImageSource")
+                        .HasColumnType("longtext CHARACTER SET utf8mb4");
 
-                    b.HasIndex("ProfilePhotoPhotoId")
-                        .IsUnique();
+                    b.HasKey("MemberId");
 
                     b.HasIndex("WallId");
 
@@ -342,9 +314,6 @@ namespace YakkaApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("Caption")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
-
                     b.Property<string>("ContentType")
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
@@ -362,9 +331,6 @@ namespace YakkaApp.Migrations
 
                     b.Property<int>("MemberId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Metadata")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.Property<string>("SecureFileName")
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
@@ -399,6 +365,9 @@ namespace YakkaApp.Migrations
 
                     b.Property<int>("FavoriteCount")
                         .HasColumnType("int");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("longtext CHARACTER SET utf8mb4");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
@@ -436,24 +405,6 @@ namespace YakkaApp.Migrations
                     b.HasIndex("CommentId");
 
                     b.ToTable("PostComment");
-                });
-
-            modelBuilder.Entity("ADSBackend.Models.PostPhoto", b =>
-                {
-                    b.Property<int>("PostId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PhotoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("int");
-
-                    b.HasKey("PostId", "PhotoId");
-
-                    b.HasIndex("PhotoId");
-
-                    b.ToTable("PostPhoto");
                 });
 
             modelBuilder.Entity("ADSBackend.Models.PostReaction", b =>
@@ -659,27 +610,8 @@ namespace YakkaApp.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ADSBackend.Models.FriendRequest", b =>
-                {
-                    b.HasOne("ADSBackend.Models.Member", "Friend")
-                        .WithMany()
-                        .HasForeignKey("FriendId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ADSBackend.Models.Member", "Member")
-                        .WithMany("FriendRequests")
-                        .HasForeignKey("MemberId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("ADSBackend.Models.Member", b =>
                 {
-                    b.HasOne("ADSBackend.Models.Photo", "ProfilePhoto")
-                        .WithOne()
-                        .HasForeignKey("ADSBackend.Models.Member", "ProfilePhotoPhotoId");
-
                     b.HasOne("ADSBackend.Models.Wall", "Wall")
                         .WithMany()
                         .HasForeignKey("WallId")
@@ -732,21 +664,6 @@ namespace YakkaApp.Migrations
                         .WithMany("Comments")
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ADSBackend.Models.PostPhoto", b =>
-                {
-                    b.HasOne("ADSBackend.Models.Photo", "Photo")
-                        .WithMany()
-                        .HasForeignKey("PhotoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ADSBackend.Models.Post", "Post")
-                        .WithMany("Images")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

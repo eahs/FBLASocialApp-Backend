@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -18,22 +18,33 @@ namespace ADSBackend.Models
 	{
 		[Key]
 		public int PostId { get; set; }
+		[Required]
 		public int AuthorId { get; set; }
 		public Member Author { get; set; }
+		[Required]
 		public string Title { get; set; }
 		public string Body { get; set; }
-		public string Image { get; set; }
+
+		public List<PostPhoto> Images { get; set; }
+
+		[Required]
 		public bool IsMachinePost { get; set; } = false;
-		public DateTime CreatedAt { get; set; }
+		[Required]
+		public DateTime CreatedAt { get; set; } = DateTime.Now;
 		public DateTime EditedAt { get; set; }
+		[Required]
+		[Display(Name = "Is Deleted")]
 		public bool IsDeleted { get; set; } = false;
 		public List<PostReaction> Reactions { get; set; }
 		public List<PostComment> Comments { get; set; }
+		[Required]
+		[Display(Name = "Privacy Level")]
 		public PrivacyLevel PrivacyLevel { get; set; } = PrivacyLevel.Public;
 		public int FavoriteCount { get; set; }
-		public bool IsFeatured { get; set; }
-		[NotMapped]
-		public bool IsFavorite { get; set; }
+		[Required]
+		[Display(Name = "Is Featured")]
+		public bool IsFeatured { get; set; } = false;
+		[NotMapped] public bool IsFavorite { get; set; } = false;
 
 	}
 }

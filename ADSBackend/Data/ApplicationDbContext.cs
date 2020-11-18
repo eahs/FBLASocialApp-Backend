@@ -1,4 +1,4 @@
-﻿using ADSBackend.Models;
+using ADSBackend.Models;
 using ADSBackend.Models.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +13,7 @@ namespace ADSBackend.Data
         }
 
         public DbSet<ConfigurationItem> ConfigurationItem { get; set; }
+        public DbSet<Photo> Photo { get; set; }
         public DbSet<Member> Member { get; set; }
         public DbSet<ChatMessage> ChatMessage { get; set; }
         public DbSet<ChatSession> ChatSession { get; set; }
@@ -20,7 +21,9 @@ namespace ADSBackend.Data
         public DbSet<Post> Post { get; set; }
         public DbSet<Reaction> Reaction { get; set; }
         public DbSet<Wall> Wall { get; set; }
-
+        public DbSet<WallPost> WallPost { get; set; }
+        public DbSet<FriendRequest> FriendRequest { get; set; }
+        public DbSet<MemberFriend> MemberFriend { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -36,6 +39,12 @@ namespace ADSBackend.Data
             builder.Entity<MemberFriend>()
                 .HasOne(mf => mf.Member)
                 .WithMany(m => m.Friends)
+                .HasForeignKey(cm => cm.MemberId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<FriendRequest>()
+                .HasOne(mf => mf.Member)
+                .WithMany(m => m.FriendRequests)
                 .HasForeignKey(cm => cm.MemberId)
                 .OnDelete(DeleteBehavior.NoAction);
 
@@ -79,10 +88,20 @@ namespace ADSBackend.Data
             builder.Entity<ChatSessionMember>()
                 .HasOne(c => c.Member)
                 .WithMany(m => m.ChatSessions)
-                .HasForeignKey(m => m.MemberId);
+                .HasForeignKey(m => m.MemberId);           
 
+            builder.Entity<PostPhoto>()
+                .HasKey(t => new { t.PostId, t.PhotoId });
 
-            
+            builder.Entity<PostPhoto>()
+                .HasOne(p => p.Post)
+                .WithMany(p => p.Images)
+                .HasForeignKey(p => p.PostId);
+
+            builder.Entity<Member>()
+                .HasOne(m => m.ProfilePhoto)
+                .WithOne()
+                .HasForeignKey<Member>(m => m.ProfilePhotoPhotoId);
         }
     }
 }

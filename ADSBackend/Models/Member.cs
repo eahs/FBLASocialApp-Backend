@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -48,10 +49,14 @@ namespace ADSBackend.Models
         public string Email { get; set; }
 
         [DataType(DataType.PhoneNumber)]
+        [Display(Name = "Phone Number")]
         public string PhoneNumber { get; set; }
 
+        [ForeignKey("Photo")]
+        public int? ProfilePhotoPhotoId { get; set; }
+        
         [Display(Name = "Profile Picture")]
-        public string profileImageSource { get; set; }
+        public Photo ProfilePhoto { get; set; }
 
         [Display(Name = "Bio")]
         public string Description { get; set; }
@@ -60,13 +65,14 @@ namespace ADSBackend.Models
         [JsonIgnore]
         [MinLength(8, ErrorMessage = "Password must be at least 8 characters long")]
         public string Password { get; set; }
-        [JsonIgnore]
 
+        [JsonIgnore]
         public string PasswordSalt { get; set; }
 
         public int WallId { get; set; }
         public Wall Wall { get; set; }
         public List<MemberFriend> Friends { get; set; }
         public List<ChatSessionMember> ChatSessions { get; set; }
+        public List<FriendRequest> FriendRequests { get; set; }
     }
 }

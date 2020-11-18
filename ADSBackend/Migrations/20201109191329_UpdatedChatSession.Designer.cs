@@ -3,14 +3,16 @@ using System;
 using ADSBackend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace YakkaApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201109191329_UpdatedChatSession")]
+    partial class UpdatedChatSession
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -121,33 +123,6 @@ namespace YakkaApp.Migrations
                     b.HasKey("Key");
 
                     b.ToTable("ConfigurationItem");
-                });
-
-            modelBuilder.Entity("ADSBackend.Models.FriendRequest", b =>
-                {
-                    b.Property<int>("FriendRequestId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("FriendId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MemberId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("RequestIssuedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.HasKey("FriendRequestId");
-
-                    b.HasIndex("FriendId");
-
-                    b.HasIndex("MemberId");
-
-                    b.ToTable("FriendRequest");
                 });
 
             modelBuilder.Entity("ADSBackend.Models.Identity.ApplicationRole", b =>
@@ -656,21 +631,6 @@ namespace YakkaApp.Migrations
                         .WithMany()
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ADSBackend.Models.FriendRequest", b =>
-                {
-                    b.HasOne("ADSBackend.Models.Member", "Friend")
-                        .WithMany()
-                        .HasForeignKey("FriendId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ADSBackend.Models.Member", "Member")
-                        .WithMany("FriendRequests")
-                        .HasForeignKey("MemberId")
-                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
                 });
 

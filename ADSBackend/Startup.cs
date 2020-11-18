@@ -1,6 +1,7 @@
 using ADSBackend.Configuration;
 using ADSBackend.Data;
 using ADSBackend.Helpers;
+using ADSBackend.Hubs;
 using ADSBackend.Models.Identity;
 using ADSBackend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,6 +18,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ADSBackend
 {
@@ -70,6 +72,7 @@ namespace ADSBackend
 
             services.AddTransient<Services.Configuration>();
 
+            services.AddRazorPages().AddRazorRuntimeCompilation();
             services.AddMvc();
 
             services.AddSwaggerGen(c =>
@@ -80,6 +83,31 @@ namespace ADSBackend
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 12345abcdef\"",
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                          new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "Bearer"
+                                }
+                            },
+                            new string[] {}
+
+                    }
+                });
             });
 
             // configure strongly typed settings object
@@ -102,14 +130,37 @@ namespace ADSBackend
                     ValidateIssuer = false,
                     ValidateAudience = false
                 };
+                x.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        // If the request is for our hub...
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            (path.StartsWithSegments("/hubs/chat")))
+                        {
+                            // Read the token out of the query string
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
             // configure DI for application services
             services.AddScoped<IUserService, UserService>();
+
+            services.AddSignalR()
+                .AddJsonProtocol(options => { options.PayloadSerializerOptions.PropertyNamingPolicy = null; });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            UpdateDatabase(app);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -140,6 +191,7 @@ namespace ADSBackend
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+                endpoints.MapHub<ChatHub>("/hubs/chat");
             });
 
             app.UseSwagger();
@@ -160,6 +212,26 @@ namespace ADSBackend
                 // seed the AspNetUsers table
                 var userSeed = new ApplicationUserSeed(userManager);
                 userSeed.CreateAdminUser();
+            }
+        }
+
+        private static void UpdateDatabase(IApplicationBuilder app)
+        {
+            try
+            {
+                using (var serviceScope = app.ApplicationServices
+                    .GetRequiredService<IServiceScopeFactory>()
+                    .CreateScope())
+                {
+                    using (var context = serviceScope.ServiceProvider.GetService<ApplicationDbContext>())
+                    {
+                        context.Database.Migrate();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                // Log error
             }
         }
     }

@@ -9,14 +9,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.Intrinsics.X86;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using YakkaApp.Helpers;
 
 namespace ADSBackend.Controllers.Api.v1
 {
@@ -34,13 +35,11 @@ namespace ADSBackend.Controllers.Api.v1
             _userService = userService;            
         }
 
-        private static bool IsValidEmail(string email)
-        {
-            // source: http://thedailywtf.com/Articles/Validating_Email_Addresses.aspx
-            Regex rx = new Regex(@"^[-!#$%&'*+/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+/0-9=?A-Z^_a-z{|}~])*@[a-zA-Z](-?[a-zA-Z0-9])*(\.[a-zA-Z](-?[a-zA-Z0-9])*)+$");
-            return rx.IsMatch(email);
-        }
-
+        /// <summary>
+        /// Authenticates a user
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [AllowAnonymous]
         [HttpPost("authenticate")]
         public async Task<ApiResponse> Authenticate(AuthenticateRequest model)
@@ -48,9 +47,138 @@ namespace ADSBackend.Controllers.Api.v1
             var member = await _userService.Authenticate(model);
 
             if (member == null)
-                return new ApiResponse(System.Net.HttpStatusCode.NotFound, model, "Username or password is incorrect");
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, model, "Email or password is incorrect");
 
             return new ApiResponse(System.Net.HttpStatusCode.OK, member);
+        }
+
+        /// <summary>
+        /// Gets a list of friends for a member
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("friends")]
+        public async Task<ApiResponse> GetFriends()
+        {
+            var httpUser = (Member)HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.Friends)
+                                              .ThenInclude(mf => mf.Friend)
+                                              .ThenInclude(mf => mf.ProfilePhoto)
+                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
+            List<Member> friends = member.Friends.Select(f => f.Friend).ToList();
+
+            for (int i = 0; i < friends.Count; i++)
+            {
+                Member rf = friends[i];
+
+                friends[i] = new Member
+                {
+                    MemberId = rf.MemberId,
+                    FirstName = rf.FirstName,
+                    LastName = rf.LastName,
+                    ProfilePhoto = rf.ProfilePhoto
+                };
+            }
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK, friends);
+        }
+
+        [HttpPost("friends/{id}")]
+        public async Task<ApiResponse> AddFriendRequest (int id)
+        {
+            var httpUser = (Member)HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.Friends)
+                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
+            var exists = member.Friends.Where(f => f.FriendId == id);
+
+            if (exists != null)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, errorMessage: "Member already a friend");
+            }
+
+            FriendRequest request = new FriendRequest
+            {
+                MemberId = httpUser.MemberId,
+                FriendId = id,
+                RequestIssuedAt = DateTime.Now,
+                Status = FriendRequestStatus.Pending
+            };
+
+            _context.FriendRequest.Add(request);
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK, request);
+        }
+
+        [HttpDelete("friends/{id}")]
+        public async Task<ApiResponse> RemoveFriend(int id)
+        {
+            var httpUser = (Member)HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.Friends)
+                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
+            var friend = member.Friends.FirstOrDefault(f => f.FriendId == id);
+
+            if (friend != null)
+            {
+                // Remove friend
+                _context.MemberFriend.Remove(friend);
+                await _context.SaveChangesAsync();
+            }
+
+            // Remove any pending friend requests
+            var requests = await _context.FriendRequest.Where((fr => fr.MemberId == httpUser.MemberId && fr.FriendId == id && fr.Status == FriendRequestStatus.Pending))
+                                                       .ToListAsync();
+
+            foreach (var request in requests)
+            {
+                request.Status = FriendRequestStatus.Rejected;
+            }
+
+            _context.FriendRequest.UpdateRange(requests);
+            await _context.SaveChangesAsync();
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK);
+        }
+
+        [HttpGet("friends/requests")]
+        public async Task<ApiResponse> GetFriendRequests()
+        {
+            var httpUser = (Member)HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.FriendRequests)
+                                              .ThenInclude(mf => mf.Friend)
+                                              .Include(m => m.ProfilePhoto)
+                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
+            foreach (var request in member.FriendRequests)
+            {
+                request.Friend = new Member
+                {
+                    MemberId = request.Friend.MemberId,
+                    FirstName = request.Friend.FirstName,
+                    LastName = request.Friend.LastName,
+                    ProfilePhoto = request.Friend.ProfilePhoto
+                };
+            }
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK, member.FriendRequests);
         }
 
         // GET: api/v1/Members/{id}
@@ -61,19 +189,39 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet("{id}")]
         public async Task<ApiResponse> GetMember(int id)
         {
+            // TODO: Add validation for an id that member is a friend of the logged in user?
             var httpUser = (Member)HttpContext.Items["User"];
 
             var member = await _context.Member.Include(m => m.Friends)
                                               .ThenInclude(f => f.Friend)
+                                              .ThenInclude(mf => mf.ProfilePhoto)
+                                              .Include(m => m.ProfilePhoto)
                                               .FirstOrDefaultAsync(m => m.MemberId == id);
 
-            // TODO: Strip all data that isn't supposed to be public from this api response
+            for (int i = 0; i < member.Friends.Count; i++)
+            {
+                Member rf = member.Friends[i].Friend;
+
+                member.Friends[i] = new MemberFriend
+                {
+                    Friend = new Member
+                    {
+                        MemberId = rf.MemberId,
+                        FirstName = rf.FirstName,
+                        LastName = rf.LastName,
+                        ProfilePhoto = rf.ProfilePhoto
+                    }
+                };
+            }
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
 
             return new ApiResponse(System.Net.HttpStatusCode.OK, member);  
         }
 
-        private const string createMemberBindingFields = "FirstName,LastName,Birthday,Email,Password,Country";
-        private const string updateMemberBindingFields = "FirstName, LastName, Birthday, Gender, Address, City, State, ZipCode, Country, PhoneNumber, profileImageSource, Description";
+        private const string CreateMemberBindingFields = "FirstName,LastName,Birthday,Email,Password,Country";
+        private const string UpdateMemberBindingFields = "FirstName,LastName,Birthday,Gender,Address,City,State,ZipCode,Country,PhoneNumber,Description";
 
         // POST: api/v1/Members/
         /// <summary>
@@ -82,7 +230,7 @@ namespace ADSBackend.Controllers.Api.v1
         /// <param name="member"></param>
         [AllowAnonymous]
         [HttpPost]
-        public async Task<ApiResponse> CreateMember ([Bind (createMemberBindingFields)]Member member)
+        public async Task<ApiResponse> CreateMember ([Bind (CreateMemberBindingFields)]Member member)
         {
             var safemember = new Member
             {
@@ -95,7 +243,7 @@ namespace ADSBackend.Controllers.Api.v1
             };
             
             TryValidateModel(safemember);
-            ModelState.Scrub(createMemberBindingFields);  // Remove all errors that aren't related to the binding fields
+            ModelState.Scrub(CreateMemberBindingFields);  // Remove all errors that aren't related to the binding fields
 
             if (!ModelState.IsValid)
             {
@@ -134,7 +282,7 @@ namespace ADSBackend.Controllers.Api.v1
         /// </summary>
         /// <param name="member"></param>   
         [HttpPut]
-        public async Task<ApiResponse> UpdateMember([Bind(updateMemberBindingFields)]Member member)
+        public async Task<ApiResponse> UpdateMember([Bind(UpdateMemberBindingFields)]Member member)
         {
             var httpUser = (Member) HttpContext.Items["User"];
             var newMember = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
@@ -154,11 +302,10 @@ namespace ADSBackend.Controllers.Api.v1
             newMember.ZipCode = member.ZipCode ?? newMember.ZipCode;
             newMember.Country = member.Country ?? newMember.Country;
             newMember.PhoneNumber = member.PhoneNumber ?? newMember.PhoneNumber;
-            newMember.profileImageSource = member.profileImageSource ?? newMember.profileImageSource;
             newMember.Description = member.Description ?? newMember.Description;
 
             TryValidateModel(newMember);
-            ModelState.Scrub(updateMemberBindingFields);  // Remove all errors that aren't related to the binding fields
+            ModelState.Scrub(UpdateMemberBindingFields);  // Remove all errors that aren't related to the binding fields
 
             // Add custom errors to fields
             //ModelState.AddModelError("Email", "Something else with email is wrong");
@@ -182,9 +329,17 @@ namespace ADSBackend.Controllers.Api.v1
         /// </summary>
         /// <param name="id"></param>   
         [HttpDelete("{id}")]
-        public async Task<bool> DeleteMember(int id)
+        public async Task<ApiResponse> DeleteMember(int id)
         {
-            return true;
+            var httpUser = (Member) HttpContext.Items["Users"];
+            var member = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            if (member == null)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, "Member not found");
+            }
+            _context.Member.Remove(member);
+            await _context.SaveChangesAsync();
+            return new ApiResponse(System.Net.HttpStatusCode.OK, null);
         }
         
 
