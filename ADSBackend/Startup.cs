@@ -72,6 +72,7 @@ namespace ADSBackend
 
             services.AddTransient<Services.Configuration>();
 
+            services.AddRazorPages().AddRazorRuntimeCompilation();
             services.AddMvc();
 
             services.AddSwaggerGen(c =>

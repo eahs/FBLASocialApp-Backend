@@ -1,0 +1,58 @@
+﻿@model IEnumerable<ADSBackend.Models.Post>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<ol class="breadcrumb">
+    <li class="breadcrumb-item">
+        <a asp-controller="Admin" asp-action="Index">Home</a>
+    </li>
+    <li class="breadcrumb-item active">
+        <strong>Posts</strong>
+    </li>
+</ol>
+
+<p>
+    <a asp-action="Create" class="btn btn-w-m btn-primary">Create New</a>
+</p>
+<div class="ibox">
+    <div class="ibox-content">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Author)
+                    </th>
+                    <th>
+                        Post
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.CreatedAt)
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Author.FullName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Title)<br />
+                            @Html.DisplayFor(modelItem => item.Body)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.CreatedAt)
+                        </td>
+                        <td nowrap>
+                            @await Html.PartialAsync("_CrudOptions", item.PostId)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

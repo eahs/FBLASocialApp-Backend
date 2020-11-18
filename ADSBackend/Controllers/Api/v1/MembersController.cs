@@ -329,9 +329,17 @@ namespace ADSBackend.Controllers.Api.v1
         /// </summary>
         /// <param name="id"></param>   
         [HttpDelete("{id}")]
-        public async Task<bool> DeleteMember(int id)
+        public async Task<ApiResponse> DeleteMember(int id)
         {
-            return true;
+            var httpUser = (Member) HttpContext.Items["Users"];
+            var member = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            if (member == null)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, "Member not found");
+            }
+            _context.Member.Remove(member);
+            await _context.SaveChangesAsync();
+            return new ApiResponse(System.Net.HttpStatusCode.OK, null);
         }
         
 
