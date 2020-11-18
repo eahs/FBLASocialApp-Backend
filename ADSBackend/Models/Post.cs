@@ -33,6 +33,7 @@ namespace ADSBackend.Models
 		public DateTime CreatedAt { get; set; } = DateTime.Now;
 		public DateTime EditedAt { get; set; }
 		[Required]
+		[Display(Name = "Is Deleted")]
 		public bool IsDeleted { get; set; } = false;
 		public List<PostReaction> Reactions { get; set; }
 		public List<PostComment> Comments { get; set; }
