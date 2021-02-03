@@ -29,19 +29,19 @@ namespace YakkaApp.Controllers.Api.v1
         // GET: Reactions
         public async Task<ApiResponse> Index()
         {
-
+            return new ApiResponse(System.Net.HttpStatusCode.BadGateway, errorMessage: "API Not In Use");
         }
 
         // GET: Reactions/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public async Task<ApiResponse> Details(int? id)
         {
-
+            return new ApiResponse(System.Net.HttpStatusCode.BadGateway, errorMessage: "API Not In Use");
         }
 
         // GET: Reactions/Create
-        public Task<ApiResponse> Create()
+        public async Task<ApiResponse> Create()
         {
-
+            return new ApiResponse(System.Net.HttpStatusCode.BadGateway, errorMessage: "API Not In Use");
         }
 
         // POST: Reactions/Create
@@ -51,13 +51,13 @@ namespace YakkaApp.Controllers.Api.v1
         [ValidateAntiForgeryToken]
         public async Task<ApiResponse> Create([Bind("ReactionId,ReactionType,MemberId")] Reaction reaction)
         {
-
+            return new ApiResponse(System.Net.HttpStatusCode.BadGateway, errorMessage: "API Not In Use");
         }
 
         // GET: Reactions/Edit/5
         public async Task<ApiResponse> Edit(int? id)
         {
-            return View(reaction);
+            return new ApiResponse(System.Net.HttpStatusCode.BadGateway, errorMessage: "API Not In Use");
         }
 
         // POST: Reactions/Edit/5
@@ -67,12 +67,13 @@ namespace YakkaApp.Controllers.Api.v1
         [ValidateAntiForgeryToken]
         public async Task<ApiResponse> Edit(int id, [Bind("ReactionId,ReactionType,MemberId")] Reaction reaction)
         {
-
+            return new ApiResponse(System.Net.HttpStatusCode.BadGateway, errorMessage: "API Not In Use");
         }
 
         // GET: Reactions/Delete/5
         public async Task<ApiResponse> Delete(int? id)
         {
+            return new ApiResponse(System.Net.HttpStatusCode.BadGateway, errorMessage: "API Not In Use");
         }
 
         // POST: Reactions/Delete/5
@@ -80,7 +81,7 @@ namespace YakkaApp.Controllers.Api.v1
         [ValidateAntiForgeryToken]
         public async Task<ApiResponse> DeleteConfirmed(int id)
         {
-
+            return new ApiResponse(System.Net.HttpStatusCode.BadGateway, errorMessage: "API Not In Use");
         }
 
         private bool ReactionExists(int id)
