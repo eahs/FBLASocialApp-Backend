@@ -13,7 +13,7 @@
     </li>
 </ol>
 
-
+<br />
 <p>
     <a asp-action="Create" class="btn btn-w-m btn-primary">Create New</a>
 </p>
@@ -34,9 +34,6 @@
                     <th>
                         @Html.DisplayNameFor(model => model.Email)
                     </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.Wall)
-                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -55,9 +52,6 @@
                         </td>
                         <td>
                             @Html.DisplayFor(modelItem => item.Email)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Wall.WallId)
                         </td>
                         <td>
                             @await Html.PartialAsync("_CrudOptions", item.MemberId)
