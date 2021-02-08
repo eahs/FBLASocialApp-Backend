@@ -15,12 +15,40 @@ namespace YakkaApp.Controllers
     public class MembersController : Controller
     {
         private readonly ApplicationDbContext _context;
-
+        
         public MembersController(ApplicationDbContext context)
         {
             _context = context;
         }
-
+        
+        // LOCAL UTIL FUNCTIONS...
+        public List<SelectListItem> GendersList(Member member)
+        {
+            // Getting List of Genders
+            List<SelectListItem> list = new List<SelectListItem>()
+            {
+                new SelectListItem
+                {
+                    Text = "Male",
+                    Value = "Male",
+                    Selected = member.Gender.ToLower() == "male" ? true : false
+                },
+                new SelectListItem
+                {
+                    Text = "Female",
+                    Value = "Female",
+                    Selected = member.Gender.ToLower() == "female" ? true : false
+                },
+                new SelectListItem
+                {
+                    Text = "Non-Binary",
+                    Value = "Non-Binary",
+                    Selected = member.Gender.ToLower() == "non-binary" ? true : false
+                }
+            };
+            return list;
+        }
+        
         // GET: Members
         public async Task<IActionResult> Index()
         {
@@ -71,6 +99,7 @@ namespace YakkaApp.Controllers
             }
             ViewData["ProfilePhotoPhotoId"] = new SelectList(_context.Photo, "PhotoId", "PhotoId", member.ProfilePhotoPhotoId);
             ViewData["WallId"] = new SelectList(_context.Wall, "WallId", "WallId", member.WallId);
+            ViewData["GendersList"] = GendersList(member);
             return View(member);
         }
 
@@ -89,6 +118,9 @@ namespace YakkaApp.Controllers
             }
             ViewData["ProfilePhotoPhotoId"] = new SelectList(_context.Photo, "PhotoId", "PhotoId", member.ProfilePhotoPhotoId);
             ViewData["WallId"] = new SelectList(_context.Wall, "WallId", "WallId", member.WallId);
+            
+
+
             return View(member);
         }
 
