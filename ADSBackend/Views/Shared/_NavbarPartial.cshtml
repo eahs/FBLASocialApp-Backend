@@ -42,11 +42,14 @@
 				</li>
 				@if (User.IsInRole("Admin"))
 				{
-					<li is-active-route asp-controller="Users">
-						<a asp-controller="Members" asp-action="Index"><i class="fa fa-users"></i><span class="nav-label">Manage Members</span></a>
+					<li is-active-route asp-controller="Posts">
+						<a asp-controller="Posts" asp-action="Index"><i class="fa fa-file"></i><span class="nav-label">Posts</span></a>
 					</li>
 					<li is-active-route asp-controller="Users">
-						<a asp-controller="Users" asp-action="Index"><i class="fa fa-users"></i><span class="nav-label">Manage Admin Users</span></a>
+						<a asp-controller="Members" asp-action="Index"><i class="fa fa-users"></i><span class="nav-label">Members</span></a>
+					</li>
+					<li is-active-route asp-controller="Users">
+						<a asp-controller="Users" asp-action="Index"><i class="fa fa-users"></i><span class="nav-label">Adminstrative Users</span></a>
 					</li>
 					<li is-active-route asp-controller="Configuration">
 						<a asp-controller="Configuration" asp-action="Index"><i class="fa fa-cog"></i><span class="nav-label">Configuration</span></a>
