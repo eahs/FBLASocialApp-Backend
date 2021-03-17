@@ -14,10 +14,17 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Runtime.Intrinsics.X86;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using FileTypeChecker;
+using FileTypeChecker.Abstracts;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Jpeg;
 
 namespace ADSBackend.Controllers.Api.v1
 {
@@ -32,7 +39,7 @@ namespace ADSBackend.Controllers.Api.v1
         public MembersController(ApplicationDbContext context, IUserService userService)
         {
             _context = context;
-            _userService = userService;            
+            _userService = userService;
         }
 
         /// <summary>
@@ -59,41 +66,53 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet("friends")]
         public async Task<ApiResponse> GetFriends()
         {
-            var httpUser = (Member)HttpContext.Items["User"];
+            var httpUser = (Member) HttpContext.Items["User"];
+            //
+            // var member = await _context.Member.Include(m => m.Friends)
+            //     .ThenInclude(mf => mf.Friend)
+            //     .ThenInclude(mf => mf.ProfilePhoto)
+            //     .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            //
+            // if (member == null)
+            //     return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+            //
+            // List<Member> friends = member.Friends.Select(f => f.Friend).ToList();
+            //
+            // for (int i = 0; i < friends.Count; i++)
+            // {
+            //     Member rf = friends[i];
+            //
+            //     friends[i] = new Member
+            //     {
+            //         MemberId = rf.MemberId,
+            //         FirstName = rf.FirstName,
+            //         LastName = rf.LastName,
+            //         ProfilePhoto = rf.ProfilePhoto
+            //     };
+            // }
+            //
+            // return new ApiResponse(System.Net.HttpStatusCode.OK, friends);
+            
+            // TEMP WORK AROUND FOR DEMO #2.......
 
-            var member = await _context.Member.Include(m => m.Friends)
-                                              .ThenInclude(mf => mf.Friend)
-                                              .ThenInclude(mf => mf.ProfilePhoto)
-                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
-
-            if (member == null)
-                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
-
-            List<Member> friends = member.Friends.Select(f => f.Friend).ToList();
-
-            for (int i = 0; i < friends.Count; i++)
-            {
-                Member rf = friends[i];
-
-                friends[i] = new Member
-                {
-                    MemberId = rf.MemberId,
-                    FirstName = rf.FirstName,
-                    LastName = rf.LastName,
-                    ProfilePhoto = rf.ProfilePhoto
-                };
-            }
-
-            return new ApiResponse(System.Net.HttpStatusCode.OK, friends);
+            var members = await _context.Member.Include(m => m.Friends)
+                .Include(m => m.Wall)
+                .Include(m => m.ProfilePhoto)
+                .Include(m => m.ChatSessions)
+                .Include(m => m.FriendRequests).ToListAsync();
+            if(members == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member(s) not found");
+            
+            return new ApiResponse(System.Net.HttpStatusCode.OK, members);
         }
 
         [HttpPost("friends/{id}")]
-        public async Task<ApiResponse> AddFriendRequest (int id)
+        public async Task<ApiResponse> AddFriendRequest(int id)
         {
-            var httpUser = (Member)HttpContext.Items["User"];
+            var httpUser = (Member) HttpContext.Items["User"];
 
             var member = await _context.Member.Include(m => m.Friends)
-                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+                .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
 
             if (member == null)
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
@@ -122,10 +141,10 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpDelete("friends/{id}")]
         public async Task<ApiResponse> RemoveFriend(int id)
         {
-            var httpUser = (Member)HttpContext.Items["User"];
+            var httpUser = (Member) HttpContext.Items["User"];
 
             var member = await _context.Member.Include(m => m.Friends)
-                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+                .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
 
             if (member == null)
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
@@ -140,8 +159,9 @@ namespace ADSBackend.Controllers.Api.v1
             }
 
             // Remove any pending friend requests
-            var requests = await _context.FriendRequest.Where((fr => fr.MemberId == httpUser.MemberId && fr.FriendId == id && fr.Status == FriendRequestStatus.Pending))
-                                                       .ToListAsync();
+            var requests = await _context.FriendRequest.Where((fr =>
+                    fr.MemberId == httpUser.MemberId && fr.FriendId == id && fr.Status == FriendRequestStatus.Pending))
+                .ToListAsync();
 
             foreach (var request in requests)
             {
@@ -157,12 +177,12 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet("friends/requests")]
         public async Task<ApiResponse> GetFriendRequests()
         {
-            var httpUser = (Member)HttpContext.Items["User"];
+            var httpUser = (Member) HttpContext.Items["User"];
 
             var member = await _context.Member.Include(m => m.FriendRequests)
-                                              .ThenInclude(mf => mf.Friend)
-                                              .Include(m => m.ProfilePhoto)
-                                              .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+                .ThenInclude(mf => mf.Friend)
+                .Include(m => m.ProfilePhoto)
+                .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
 
             if (member == null)
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
@@ -190,13 +210,13 @@ namespace ADSBackend.Controllers.Api.v1
         public async Task<ApiResponse> GetMember(int id)
         {
             // TODO: Add validation for an id that member is a friend of the logged in user?
-            var httpUser = (Member)HttpContext.Items["User"];
+            var httpUser = (Member) HttpContext.Items["User"];
 
             var member = await _context.Member.Include(m => m.Friends)
-                                              .ThenInclude(f => f.Friend)
-                                              .ThenInclude(mf => mf.ProfilePhoto)
-                                              .Include(m => m.ProfilePhoto)
-                                              .FirstOrDefaultAsync(m => m.MemberId == id);
+                .ThenInclude(f => f.Friend)
+                .ThenInclude(mf => mf.ProfilePhoto)
+                .Include(m => m.ProfilePhoto)
+                .FirstOrDefaultAsync(m => m.MemberId == id);
 
             for (int i = 0; i < member.Friends.Count; i++)
             {
@@ -217,11 +237,13 @@ namespace ADSBackend.Controllers.Api.v1
             if (member == null)
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
 
-            return new ApiResponse(System.Net.HttpStatusCode.OK, member);  
+            return new ApiResponse(System.Net.HttpStatusCode.OK, member);
         }
 
         private const string CreateMemberBindingFields = "FirstName,LastName,Birthday,Email,Password,Country";
-        private const string UpdateMemberBindingFields = "FirstName,LastName,Birthday,Gender,Address,City,State,ZipCode,Country,PhoneNumber,Description";
+
+        private const string UpdateMemberBindingFields =
+            "FirstName,LastName,Birthday,Gender,Address,City,State,ZipCode,Country,PhoneNumber,Description";
 
         // POST: api/v1/Members/
         /// <summary>
@@ -230,7 +252,7 @@ namespace ADSBackend.Controllers.Api.v1
         /// <param name="member"></param>
         [AllowAnonymous]
         [HttpPost]
-        public async Task<ApiResponse> CreateMember ([Bind (CreateMemberBindingFields)]Member member)
+        public async Task<ApiResponse> CreateMember([Bind(CreateMemberBindingFields)] Member member)
         {
             var safemember = new Member
             {
@@ -238,12 +260,12 @@ namespace ADSBackend.Controllers.Api.v1
                 FirstName = member.FirstName?.Trim() ?? "",
                 LastName = member.LastName?.Trim() ?? "",
                 Birthday = member.Birthday,
-                Password = member.Password ?? "",                
+                Password = member.Password ?? "",
                 Country = member.Country ?? "US"
             };
-            
+
             TryValidateModel(safemember);
-            ModelState.Scrub(CreateMemberBindingFields);  // Remove all errors that aren't related to the binding fields
+            ModelState.Scrub(CreateMemberBindingFields); // Remove all errors that aren't related to the binding fields
 
             if (!ModelState.IsValid)
             {
@@ -254,7 +276,8 @@ namespace ADSBackend.Controllers.Api.v1
             // Check to see if member already exists
             var _membercheck = await _context.Member.FirstOrDefaultAsync(m => m.Email == safemember.Email);
             if (_membercheck != null)
-                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "An account for this email already exists");
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null,
+                    "An account for this email already exists");
 
             // Securely hash the member password
             PasswordHash ph = PasswordHasher.Hash(member.Password ?? "");
@@ -282,16 +305,16 @@ namespace ADSBackend.Controllers.Api.v1
         /// </summary>
         /// <param name="member"></param>   
         [HttpPut]
-        public async Task<ApiResponse> UpdateMember([Bind(UpdateMemberBindingFields)]Member member)
+        public async Task<ApiResponse> UpdateMember([Bind(UpdateMemberBindingFields)] Member member)
         {
             var httpUser = (Member) HttpContext.Items["User"];
             var newMember = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
-            
+
             if (newMember == null)
             {
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, "User not found");
             }
-            
+
             newMember.FirstName = member.FirstName ?? newMember.FirstName;
             newMember.LastName = member.LastName ?? newMember.LastName;
             newMember.Birthday = member.Birthday; // TODO: Check to see if the birthday is valid
@@ -305,11 +328,11 @@ namespace ADSBackend.Controllers.Api.v1
             newMember.Description = member.Description ?? newMember.Description;
 
             TryValidateModel(newMember);
-            ModelState.Scrub(UpdateMemberBindingFields);  // Remove all errors that aren't related to the binding fields
+            ModelState.Scrub(UpdateMemberBindingFields); // Remove all errors that aren't related to the binding fields
 
             // Add custom errors to fields
             //ModelState.AddModelError("Email", "Something else with email is wrong");
-          
+
             if (!ModelState.IsValid)
             {
                 // Return all validation errors
@@ -318,9 +341,8 @@ namespace ADSBackend.Controllers.Api.v1
 
             _context.Member.Update(newMember);
             await _context.SaveChangesAsync();
-            
+
             return new ApiResponse(System.Net.HttpStatusCode.OK, newMember);
-            
         }
 
         // DELETE: api/v1/Members/{id}
@@ -337,11 +359,99 @@ namespace ADSBackend.Controllers.Api.v1
             {
                 return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, "Member not found");
             }
+
             _context.Member.Remove(member);
             await _context.SaveChangesAsync();
             return new ApiResponse(System.Net.HttpStatusCode.OK, null);
         }
-        
 
+        // PUT: api/v1/Members/image
+        /// <summary>
+        /// Updates a Member's Profile Picture
+        /// </summary>
+        /// <param name="file"></param>   
+        [HttpPut("image")]
+        public async Task<object> UpdateProfileImage(IFormFile file)
+        {
+            var httpUser = (Member) HttpContext.Items["Users"];
+            var member = await _context.Member.FirstOrDefaultAsync(a => a.MemberId == httpUser.MemberId);
+
+
+            if (member == null)
+            {
+                return new
+                {
+                    Status = "Failed"
+                };
+            }
+            
+            var fileType = System.IO.Path.GetExtension(file.FileName);
+            string[] allowedExtensions = new string[] {".png", ".jpg"};
+            if (allowedExtensions.Contains(fileType)) // If the file type is a png or jpg
+            {
+                string TEMP_PATH = Path.Combine("wwwroot/images/members/" + httpUser.MemberId + "temp." + fileType);
+                string FINAL_PATH = Path.Combine("wwwroot/images/members/" + httpUser.MemberId + ".jpg");
+                string BASE_PFP_URL = "https://yakka.tech/images/members/";
+
+                await file.CopyToAsync(System.IO.File.Create(TEMP_PATH)); // Creates the Temp File
+                Image image = Image.Load(TEMP_PATH);
+                int cropWidth = Math.Min(image.Width, image.Height);
+                int x = image.Width / 2 - cropWidth / 2;
+                int y = image.Height / 2 - cropWidth / 2;
+
+                // Crops the photo into a square
+                image.Mutate(a => a
+                    .Crop(new Rectangle(x, y, cropWidth, cropWidth))
+                    .Resize(150, 150));
+
+
+                // Save the new one
+                image.SaveAsJpeg(FINAL_PATH); // Automatic encoder selected based on extension.    
+
+                // Delete the temp file
+                System.IO.File.Delete(TEMP_PATH); // Deletes the Temp File
+
+
+              
+
+                var pfp = new Photo();
+                pfp.Filename = httpUser.MemberId + ".jpg";
+                pfp.MemberId = httpUser.MemberId;
+                pfp.Member = member;
+                pfp.Url = BASE_PFP_URL + httpUser.MemberId + ".jpg";
+                pfp.CreatedAt = new DateTime();
+
+                member.ProfilePhoto = pfp; // Assign the new PFP to the member.
+
+                _context.Member.Update(member);
+                await _context.SaveChangesAsync();
+            }
+
+            return new
+            {
+                Status = "Success"
+            };
+        }
+
+        // Post Upload Async Method
+        public async Task<IActionResult> OnPostUploadAsync(List<IFormFile> files)
+        {
+            long size = files.Sum(f => f.Length);
+            foreach (var formFile in files)
+            {
+                if (formFile.Length > 0)
+                {
+                    var filePath = Path.GetTempFileName();
+                    using (var stream = System.IO.File.Create(filePath))
+                    {
+                        await formFile.CopyToAsync(stream);
+                    }
+                }
+            }
+
+            // Process uploaded files
+            // Don't rely on or trust the FileName property without validation.
+            return Ok(new {count = files.Count, size});
+        }
     }
 }
