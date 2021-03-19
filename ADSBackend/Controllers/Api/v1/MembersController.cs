@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using FileTypeChecker;
 using FileTypeChecker.Abstracts;
+using ImageResizer;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Jpeg;
@@ -371,51 +372,42 @@ namespace ADSBackend.Controllers.Api.v1
         /// </summary>
         /// <param name="file"></param>   
         [HttpPut("image")]
-        public async Task<object> UpdateProfileImage(IFormFile file)
+        public async Task<ApiResponse> UpdateProfileImage(IFormFile file)
         {
-            var httpUser = (Member) HttpContext.Items["Users"];
-            var member = await _context.Member.FirstOrDefaultAsync(a => a.MemberId == httpUser.MemberId);
-
+            var httpUser = (Member) HttpContext.Items["User"];
+            var member = await _context.Member.FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
 
             if (member == null)
             {
-                return new
-                {
-                    Status = "Failed"
-                };
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, null, "Member not found");
             }
             
-            var fileType = System.IO.Path.GetExtension(file.FileName);
+            var fileType = System.IO.Path.GetExtension(file.FileName); // FILE TYPE INCLUDES THE DOT "."
             string[] allowedExtensions = new string[] {".png", ".jpg"};
             if (allowedExtensions.Contains(fileType)) // If the file type is a png or jpg
             {
-                string TEMP_PATH = Path.Combine("wwwroot/images/members/" + httpUser.MemberId + "temp." + fileType);
                 string FINAL_PATH = Path.Combine("wwwroot/images/members/" + httpUser.MemberId + ".jpg");
                 string BASE_PFP_URL = "https://yakka.tech/images/members/";
-
-                await file.CopyToAsync(System.IO.File.Create(TEMP_PATH)); // Creates the Temp File
-                Image image = Image.Load(TEMP_PATH);
+                
+                using Image image = Image.Load(file.OpenReadStream());
                 int cropWidth = Math.Min(image.Width, image.Height);
                 int x = image.Width / 2 - cropWidth / 2;
                 int y = image.Height / 2 - cropWidth / 2;
-
+                
                 // Crops the photo into a square
                 image.Mutate(a => a
                     .Crop(new Rectangle(x, y, cropWidth, cropWidth))
                     .Resize(150, 150));
-
-
+                
+                
                 // Save the new one
-                image.SaveAsJpeg(FINAL_PATH); // Automatic encoder selected based on extension.    
+                await image.SaveAsync(FINAL_PATH, new JpegEncoder()); // Automatic encoder selected based on extension.    
+                
+                string filename = httpUser.MemberId + ".jpg";
 
-                // Delete the temp file
-                System.IO.File.Delete(TEMP_PATH); // Deletes the Temp File
-
-
-              
-
+                // Create the new Photo Object
                 var pfp = new Photo();
-                pfp.Filename = httpUser.MemberId + ".jpg";
+                pfp.Filename = filename;
                 pfp.MemberId = httpUser.MemberId;
                 pfp.Member = member;
                 pfp.Url = BASE_PFP_URL + httpUser.MemberId + ".jpg";
@@ -426,11 +418,13 @@ namespace ADSBackend.Controllers.Api.v1
                 _context.Member.Update(member);
                 await _context.SaveChangesAsync();
             }
-
-            return new
+            else
             {
-                Status = "Success"
-            };
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid File Extension! Please use .jpg or .png.");
+            }
+
+            // On Success...
+            return new ApiResponse(System.Net.HttpStatusCode.OK, null);
         }
 
         // Post Upload Async Method
