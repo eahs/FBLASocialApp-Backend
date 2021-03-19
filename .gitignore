@@ -299,3 +299,5 @@ __pycache__/
 *.xsd.cs
 
 ADSBackend/appsettings.json
+
+ADSBackend/wwwroot/images/members/
