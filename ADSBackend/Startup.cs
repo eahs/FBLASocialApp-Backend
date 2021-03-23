@@ -46,6 +46,7 @@ namespace ADSBackend
         {
             services.AddCors();
             services.AddDbContext<ApplicationDbContext>(options =>
+            
             {
                 // options.UseSqlServer(Configuration.GetConnectionString("ScholarshipsContext"));
                 options.UseMySql(
@@ -74,6 +75,9 @@ namespace ADSBackend
 
             services.AddRazorPages().AddRazorRuntimeCompilation();
             services.AddMvc();
+            services.AddControllers().AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            );
 
             services.AddSwaggerGen(c =>
             {
