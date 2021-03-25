@@ -202,6 +202,47 @@ namespace ADSBackend.Controllers.Api.v1
             return new ApiResponse(System.Net.HttpStatusCode.OK, member.FriendRequests);
         }
 
+        // GET: api/v1/Members/
+        /// <summary>
+        /// Returns a specific member
+        /// </summary>
+        [HttpGet]
+        public async Task<ApiResponse> GetMember()
+        {
+            // TODO: Add validation for an id that member is a friend of the logged in user?
+            var httpUser = (Member) HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.Friends)
+                .ThenInclude(f => f.Friend)
+                .ThenInclude(mf => mf.ProfilePhoto)
+                .Include(m => m.ProfilePhoto)
+                .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            member.Password = "REDACTED";
+            member.PasswordSalt = "REDACTED";
+
+            for (int i = 0; i < member.Friends.Count; i++)
+            {
+                Member rf = member.Friends[i].Friend;
+
+                member.Friends[i] = new MemberFriend
+                {
+                    Friend = new Member
+                    {
+                        MemberId = rf.MemberId,
+                        FirstName = rf.FirstName,
+                        LastName = rf.LastName,
+                        ProfilePhoto = rf.ProfilePhoto
+                    }
+                };
+            }
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
+            return new ApiResponse(System.Net.HttpStatusCode.OK, member);
+        }
+        
+        
         // GET: api/v1/Members/{id}
         /// <summary>
         /// Returns a specific member
