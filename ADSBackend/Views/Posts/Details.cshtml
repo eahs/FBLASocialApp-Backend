@@ -3,7 +3,17 @@
 @{
     ViewData["Title"] = "Details";
 }
-
+<ol class="breadcrumb">
+    <li class="breadcrumb-item">
+        <a asp-controller="Admin" asp-action="Index">Home</a>
+    </li>
+    <li class="breadcrumb-item">
+        <a asp-controller="Posts" asp-action="Index">Posts</a>
+    </li>
+    <li class="breadcrumb-item active">
+        <strong>Details</strong>
+    </li>
+</ol>
 <h2>Details</h2>
 
 <div>
