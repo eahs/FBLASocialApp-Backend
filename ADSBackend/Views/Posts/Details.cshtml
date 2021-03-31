@@ -18,71 +18,62 @@
 
 <div>
     <h4>Post</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.Author)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Author.Country)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Body)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Body)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.IsMachinePost)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.IsMachinePost)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.EditedAt)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.EditedAt)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.IsDeleted)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.IsDeleted)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.PrivacyLevel)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.PrivacyLevel)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.FavoriteCount)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.FavoriteCount)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.IsFeatured)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.IsFeatured)
-        </dd>
-    </dl>
-</div>
-<div>
+    <hr/>
+    <div class="ibox-content">
+        <div class="row">
+            <div class="col-md-4">
+                <form asp-action="Edit">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="PostId"/>
+                    <div class="form-group">
+                        <label asp-for="AuthorId" class="control-label">Author</label>
+                        <input disabled asp-for="AuthorId" class="form-control" />
+                        <span asp-validation-for="AuthorId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Title" class="control-label"></label>
+                        <input disabled asp-for="Title" class="form-control"/>
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Body" class="control-label"></label>
+                        <textarea disabled asp-for="Body" name="Body" cols="20" rows="10" class="form-control"></textarea>
+                        <span asp-validation-for="Body" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="CreatedAt" class="control-label"></label>
+                        <input disabled asp-for="CreatedAt" class="form-control"/>
+                        <span asp-validation-for="CreatedAt" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="PrivacyLevel" class="control-label">Privacy Level</label>
+                        <input disabled asp-for="PrivacyLevel" class="form-control" />
+                        <span asp-validation-for="PrivacyLevel" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="FavoriteCount" class="control-label"></label>
+                        <input disabled asp-for="FavoriteCount" class="form-control"/>
+                        <span asp-validation-for="FavoriteCount" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label>
+                                <input disabled asp-for="IsFeatured"/> @Html.DisplayNameFor(model => model.IsFeatured)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label>
+                                <input disabled asp-for="IsDeleted"/> @Html.DisplayNameFor(model => model.IsDeleted)
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <a asp-action="Edit" asp-route-id="@Model.PostId">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>
