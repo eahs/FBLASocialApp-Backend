@@ -304,7 +304,7 @@ namespace ADSBackend.Controllers.Api.v1
             string[] allowedExtensions = new string[] {".png", ".jpg"};
             if (allowedExtensions.Contains(fileType)) // If the file type is a png or jpg
             {
-                string FINAL_PATH = Path.Combine("wwwroot/images/posts/" + id + "/" + file.FileName + ".jpg");
+                string FINAL_PATH = Path.Combine("wwwroot/images/posts/" + id + "/" + file.FileName);
                 string BASE_PFP_URL = "https://yakka.tech/images/posts/";
 
                 if(!Directory.Exists("wwwroot/images/posts/" + id)) Directory.CreateDirectory("wwwroot/images/posts/" + id);
@@ -331,7 +331,7 @@ namespace ADSBackend.Controllers.Api.v1
                     Filename = filename,
                     MemberId = httpUser.MemberId,
                     Member = member,
-                    Url = BASE_PFP_URL + id + "/" + file.FileName + ".jpg",
+                    Url = BASE_PFP_URL + id + "/" + file.FileName,
                     CreatedAt = new DateTime()
                 };
                 _context.Photo.Update(newPhoto);
