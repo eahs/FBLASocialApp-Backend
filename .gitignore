@@ -301,3 +301,6 @@ __pycache__/
 ADSBackend/appsettings.json
 
 ADSBackend/wwwroot/images/members/
+
+ADSBackend/wwwroot/images/posts/6/
+ADSBackend/wwwroot/images/posts/

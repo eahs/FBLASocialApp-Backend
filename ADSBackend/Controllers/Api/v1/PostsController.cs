@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using ADSBackend.Controllers.Api.v1;
 using ADSBackend.Data;
@@ -13,6 +14,11 @@ using RestSharp;
 using ADSBackend.Helpers;
 using Microsoft.EntityFrameworkCore.Internal;
 using System.Linq;
+using System.Net;
+using Microsoft.AspNetCore.Http;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Processing;
 
 namespace ADSBackend.Controllers.Api.v1
 {
@@ -264,6 +270,91 @@ namespace ADSBackend.Controllers.Api.v1
             ReducePostsResultset(posts);
 
             return new ApiResponse(System.Net.HttpStatusCode.OK, posts);
+        }
+
+        /// <summary>
+        /// Uploads a photo to a given post
+        /// </summary>
+        /// <param name="id">Post Id</param>
+        /// <param name="file">File</param>
+        /// <returns></returns>
+        [HttpPost("{id}/photos/")]
+        public async Task<ApiResponse> GetPhotos(int id, IFormFile file)
+        {
+            var httpUser = (Member) HttpContext.Items["User"];
+
+            var member = await _context.Member.Include(m => m.Friends).FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
+            // Get the post
+            var post = await _context.Post.Include(p => p.Images).FirstOrDefaultAsync(p => p.PostId == id);
+            if (post == null)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Post not found");
+            }
+
+            if (post.AuthorId != httpUser.MemberId)
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.Unauthorized, errorMessage: "You are not the author of this post");
+            }
+
+            var fileType = System.IO.Path.GetExtension(file.FileName); // FILE TYPE INCLUDES THE DOT "."
+            string[] allowedExtensions = new string[] {".png", ".jpg"};
+            if (allowedExtensions.Contains(fileType)) // If the file type is a png or jpg
+            {
+                string FINAL_PATH = Path.Combine("wwwroot/images/posts/" + id + "/" + file.FileName + ".jpg");
+                string BASE_PFP_URL = "https://yakka.tech/images/posts/";
+
+                if(!Directory.Exists("wwwroot/images/posts/" + id)) Directory.CreateDirectory("wwwroot/images/posts/" + id);
+                
+                using Image image = Image.Load(file.OpenReadStream());
+                // int cropWidth = Math.Min(image.Width, image.Height);
+                // int x = image.Width / 2 - cropWidth / 2;
+                // int y = image.Height / 2 - cropWidth / 2;
+                //
+                // // Crops the photo into a square
+                // image.Mutate(a => a
+                //     .Crop(new Rectangle(x, y, cropWidth, cropWidth))
+                //     .Resize(150, 150));
+
+
+                // Save the new one
+                await image.SaveAsync(FINAL_PATH, new JpegEncoder()); // Automatic encoder selected based on extension.    
+
+                string filename = httpUser.MemberId + ".jpg";
+
+                // Create the new Photo Object
+                var newPhoto = new Photo
+                {
+                    Filename = filename,
+                    MemberId = httpUser.MemberId,
+                    Member = member,
+                    Url = BASE_PFP_URL + id + "/" + file.FileName + ".jpg",
+                    CreatedAt = new DateTime()
+                };
+                _context.Photo.Update(newPhoto);
+                await _context.SaveChangesAsync();
+                var postPhoto = new PostPhoto
+                {
+                    Photo = newPhoto,
+                    PhotoId = newPhoto.PhotoId,
+                    Post = post,
+                    PostId = post.PostId
+                };
+
+                post.Images.Add(postPhoto);
+                _context.Post.Update(post);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                return new ApiResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid File Extension! Please use .jpg or .png.");
+            }
+
+            // On Success...
+            return new ApiResponse(System.Net.HttpStatusCode.OK, null);
         }
 
         private void ReducePostsResultset(List<Post> posts)
