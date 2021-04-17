@@ -328,6 +328,7 @@ namespace ADSBackend.Controllers.Api.v1
 
             // Create a new wall for this member
             var wall = new Wall();
+            wall.MemberId = member.MemberId;
 
             // Passed checks so create member
             _context.Wall.Add(wall);
