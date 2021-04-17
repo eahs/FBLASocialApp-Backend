@@ -10,6 +10,8 @@ namespace ADSBackend.Models
 	{
 		[Key]
 		public int WallId { get; set; }
+		[Required]
+		public int MemberId { get; set; }
 		public List<WallPost> Posts { get; set; }
 	}
 }
