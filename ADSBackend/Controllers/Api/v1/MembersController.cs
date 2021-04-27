@@ -209,7 +209,6 @@ namespace ADSBackend.Controllers.Api.v1
         [HttpGet]
         public async Task<ApiResponse> GetMember()
         {
-            // TODO: Add validation for an id that member is a friend of the logged in user?
             var httpUser = (Member) HttpContext.Items["User"];
 
             var member = await _context.Member.Include(m => m.Friends)
@@ -217,6 +216,9 @@ namespace ADSBackend.Controllers.Api.v1
                 .ThenInclude(mf => mf.ProfilePhoto)
                 .Include(m => m.ProfilePhoto)
                 .FirstOrDefaultAsync(m => m.MemberId == httpUser.MemberId);
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+            
             member.Password = "REDACTED";
             member.PasswordSalt = "REDACTED";
 
@@ -236,8 +238,7 @@ namespace ADSBackend.Controllers.Api.v1
                 };
             }
 
-            if (member == null)
-                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+           
 
             return new ApiResponse(System.Net.HttpStatusCode.OK, member);
         }
@@ -259,7 +260,12 @@ namespace ADSBackend.Controllers.Api.v1
                 .ThenInclude(mf => mf.ProfilePhoto)
                 .Include(m => m.ProfilePhoto)
                 .FirstOrDefaultAsync(m => m.MemberId == id);
-
+            
+            if (member == null)
+                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+            member.Password = "REDACTED";
+            member.PasswordSalt = "REDACTED";
+            
             for (int i = 0; i < member.Friends.Count; i++)
             {
                 Member rf = member.Friends[i].Friend;
@@ -276,8 +282,7 @@ namespace ADSBackend.Controllers.Api.v1
                 };
             }
 
-            if (member == null)
-                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Member not found");
+
 
             return new ApiResponse(System.Net.HttpStatusCode.OK, member);
         }

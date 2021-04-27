@@ -252,10 +252,12 @@ namespace ADSBackend.Controllers.Api.v1
                 .ThenInclude(m => m.Member).ThenInclude(ph => ph.ProfilePhoto)
                 .OrderByDescending(wp => wp.PostId)
                 .ToListAsync();
-
             if (wallposts == null)
-                return new ApiResponse(System.Net.HttpStatusCode.NotFound, errorMessage: "Wall not found");
-
+            {
+                wallposts = new List<WallPost>();
+            }
+          
+            
             // Filter posts down to posts that are viewable
             List<Post> posts = wallposts.Where(wp => wp.Post.PrivacyLevel == PrivacyLevel.Public ||
                                                      (wp.Post.PrivacyLevel == PrivacyLevel.FriendsOnly && isFriend) ||
